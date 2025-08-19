@@ -450,7 +450,7 @@ def generate_pix_multa():
                 try:
                     from techbynet_api import create_techbynet_api
                     
-                    techbynet_api = create_techbynet_api('e884b37a-987a-49ba-b860-ae6b66b65f79')
+                    techbynet_api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
                     
                     techbynet_data = {
                         'nome': user_name,
@@ -555,7 +555,7 @@ def generate_pix():
         
         # Usar TechByNet como provedor principal
         app.logger.info("[PROD] 🎯 Usando TechByNet como provedor principal")
-        api = create_techbynet_api('e884b37a-987a-49ba-b860-ae6b66b65f79')
+        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
 
         # Pegar dados do cliente da sessão ou usar padrão
         customer_data = session.get('customer_data', {
@@ -984,7 +984,7 @@ def generate_pix_techbynet():
         app.logger.info(f"[TECHBYNET] Dados recebidos do frontend: {request_data}")
 
         # Inicializar API TechByNet com a chave fornecida
-        api = create_techbynet_api('e884b37a-987a-49ba-b860-ae6b66b65f79')
+        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
         app.logger.info("[TECHBYNET] API inicializada com chave fornecida")
 
         # Pegar dados do cliente da sessão
@@ -1091,7 +1091,7 @@ def generate_pix_multa_techbynet():
         request_data = request.get_json() or {}
         
         # Inicializar API TechByNet
-        api = create_techbynet_api('e884b37a-987a-49ba-b860-ae6b66b65f79')
+        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
         
         # Dados do cliente
         customer_data = session.get('customer_data', {
@@ -1620,7 +1620,7 @@ def test_techbynet():
         app.logger.info("[TEST-TECHBYNET] Iniciando teste da API TechByNet...")
         
         # Inicializar API com a chave fornecida
-        api = create_techbynet_api('e884b37a-987a-49ba-b860-ae6b66b65f79')
+        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
         
         # Dados de teste
         customer_data = {
