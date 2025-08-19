@@ -579,10 +579,19 @@
             .then(data => {
                 document.getElementById('pixLoadingSection').style.display = 'none';
                 
-                if (data.success && data.pix_code && data.qr_code_image) {
+                if (data.success && data.pix_code) {
                     // Show PIX payment section
                     currentPixCode = data.pix_code;
-                    document.getElementById('qrCodeImage').src = data.qr_code_image;
+                    
+                    // Use provided QR image or generate via external API
+                    if (data.qr_code_image) {
+                        document.getElementById('qrCodeImage').src = data.qr_code_image;
+                    } else {
+                        // Fallback para API externa para gerar QR code
+                        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.pix_code)}`;
+                        document.getElementById('qrCodeImage').src = qrCodeUrl;
+                    }
+                    
                     document.getElementById('pixCodeText').textContent = data.pix_code;
                     document.getElementById('pixPaymentSection').style.display = 'block';
                     console.log('PIX gerado com sucesso para multa');
