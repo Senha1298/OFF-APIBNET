@@ -485,20 +485,22 @@ async function openPixModal() {
     showLoadingModal();
     
     try {
-        // Get phone number from localStorage
+        // Get ALL customer data from localStorage
         const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
-        const telefone = customerData.telefone || '';
+        const clientData = {
+            telefone: customerData.telefone || '',
+            nome: customerData.nome || '',
+            cpf: customerData.cpf || ''
+        };
         
-        console.log('📞 Telefone recuperado do localStorage:', telefone);
+        console.log('📊 Dados completos do cliente recuperados do localStorage:', clientData);
         
         const response = await fetch('/generate-pix', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                telefone: telefone
-            })
+            body: JSON.stringify(clientData)
         });
 
         const data = await response.json();

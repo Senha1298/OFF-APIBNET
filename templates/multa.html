@@ -554,13 +554,21 @@
 
             // Get phone number from localStorage
             const customerDataStr = localStorage.getItem('customerData');
-            let telefone = '';
+            let customerData = {
+                telefone: '',
+                nome: '',
+                cpf: ''
+            };
             
             if (customerDataStr) {
                 try {
-                    const customerData = JSON.parse(customerDataStr);
-                    telefone = customerData.telefone || '';
-                    console.log('📞 Telefone recuperado do localStorage para multa:', telefone);
+                    const storedData = JSON.parse(customerDataStr);
+                    customerData = {
+                        telefone: storedData.telefone || '',
+                        nome: storedData.nome || '',
+                        cpf: storedData.cpf || ''
+                    };
+                    console.log('📊 Dados completos do cliente recuperados para multa:', customerData);
                 } catch (e) {
                     console.error('Error parsing customer data:', e);
                 }
@@ -571,9 +579,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    telefone: telefone
-                })
+                body: JSON.stringify(customerData)
             })
             .then(response => response.json())
             .then(data => {

@@ -378,12 +378,14 @@ def generate_pix_multa():
         api = create_buckpay_api()
         app.logger.info("[PROD] BuckPay API inicializada para multa")
 
-        # Pega os dados do cliente da sessão ou localStorage
-        customer_data = session.get('customer_data', {
-            'nome': 'JOÃO DA SILVA SANTOS',
-            'cpf': '123.456.789-00',
-            'phone': '11999999999'
-        })
+        # Pegar dados enviados pelo frontend (do localStorage)
+        customer_data = {
+            'nome': request_data.get('nome', 'JOÃO DA SILVA SANTOS'),
+            'cpf': request_data.get('cpf', '123.456.789-00'),
+            'phone': request_data.get('telefone', '11999999999')
+        }
+        
+        app.logger.info(f"[PROD] Dados do cliente recebidos: Nome={customer_data['nome']}, CPF={customer_data['cpf']}, Phone={customer_data['phone']}")
 
         # Usar telefone do frontend (localStorage) ou fallback para dados padrão
         user_phone = request_data.get('telefone', '').strip()
@@ -560,12 +562,14 @@ def generate_pix():
         app.logger.info("[PROD] 🎯 Usando TechByNet como provedor principal")
         api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
 
-        # Pegar dados do cliente da sessão ou usar padrão
-        customer_data = session.get('customer_data', {
-            'nome': 'JOÃO DA SILVA SANTOS',
-            'cpf': '123.456.789-00',
-            'phone': '11999999999'
-        })
+        # Pegar dados enviados pelo frontend (do localStorage)
+        customer_data = {
+            'nome': request_data.get('nome', 'JOÃO DA SILVA SANTOS'),
+            'cpf': request_data.get('cpf', '123.456.789-00'),
+            'phone': request_data.get('telefone', '11999999999')
+        }
+        
+        app.logger.info(f"[PROD] Dados do cliente recebidos no endpoint PIX: Nome={customer_data['nome']}, CPF={customer_data['cpf']}, Phone={customer_data['phone']}")
 
         # Usar telefone do frontend ou fallback
         user_phone = request_data.get('telefone', '').strip()
@@ -705,10 +709,37 @@ def generate_pix():
             except Exception as fallback_error:
                 app.logger.error(f"[PROD] ❌ Fallback BuckPay também falhou: {fallback_error}")
             
+            # Fallback final para PIX brasileiro
+            app.logger.info(f"[PROD] Fallback: Tentando gerar PIX brasileiro...")
+            try:
+                from brazilian_pix import create_brazilian_pix_provider
+                
+                fallback_provider = create_brazilian_pix_provider()
+                fallback_result = fallback_provider.create_pix_payment(
+                    amount=amount,
+                    customer_name=user_name,
+                    customer_cpf=user_cpf,
+                    customer_email=user_email
+                )
+                
+                if fallback_result.get('success'):
+                    app.logger.info(f"[PROD] ✅ PIX brasileiro para chat gerado com sucesso")
+                    
+                    # Adicionar campos para compatibilidade com chat
+                    fallback_result['pixCode'] = fallback_result.get('pix_code')
+                    fallback_result['transactionId'] = fallback_result.get('transaction_id', fallback_result.get('order_id'))
+                    
+                    return jsonify(fallback_result)
+                else:
+                    app.logger.error(f"[PROD] ❌ Erro no fallback PIX brasileiro: {fallback_result}")
+                    
+            except Exception as brazilian_error:
+                app.logger.error(f"[PROD] ❌ Erro no fallback PIX brasileiro: {brazilian_error}")
+            
             return jsonify({
                 'success': False,
-                'error': f"TechByNet falhou: {result.get('error', 'Erro desconhecido')}. BuckPay fallback também falhou.",
-                'provider': 'TechByNet (Principal) + BuckPay (Fallback)'
+                'error': f"Todos os provedores falharam: TechByNet, BuckPay e PIX brasileiro.",
+                'provider': 'Fallback completo'
             }), 400
     
     except Exception as e:
@@ -1097,12 +1128,14 @@ def generate_pix_multa_techbynet():
         # Inicializar API TechByNet
         api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
         
-        # Dados do cliente
-        customer_data = session.get('customer_data', {
-            'nome': 'JOÃO DA SILVA SANTOS',
-            'cpf': '123.456.789-00',
-            'phone': '11999999999'
-        })
+        # Pegar dados enviados pelo frontend (do localStorage)
+        customer_data = {
+            'nome': request_data.get('nome', 'JOÃO DA SILVA SANTOS'),
+            'cpf': request_data.get('cpf', '123.456.789-00'),
+            'phone': request_data.get('telefone', '11999999999')
+        }
+        
+        app.logger.info(f"[PROD] Dados do cliente recebidos no endpoint TechByNet: Nome={customer_data['nome']}, CPF={customer_data['cpf']}, Phone={customer_data['phone']}")
 
         user_phone = request_data.get('telefone', '').strip()
         if not user_phone or len(user_phone) < 10:

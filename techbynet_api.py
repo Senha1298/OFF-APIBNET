@@ -40,13 +40,15 @@ class TechByNetAPI:
             # Converter valor para centavos
             amount_cents = int(float(amount) * 100)
             
-            # Usar dados padrão válidos para TechByNet
-            customer_name = "João Silva Santos"
-            customer_email = "joao.silva@email.com"
-            customer_cpf = "11144477735"  # CPF válido para testes
+            # Usar dados reais do cliente fornecidos
+            customer_name = customer_data.get('nome', 'João Silva Santos')
+            customer_email = customer_data.get('email', 'joao.silva@email.com')
+            customer_cpf = customer_data.get('cpf', '11144477735').replace('.', '').replace('-', '')  # Remover formatação
             
             # Usar telefone fornecido ou fallback
-            customer_phone = phone or "11987654321"
+            customer_phone = phone or customer_data.get('phone', '11987654321')
+            
+            current_app.logger.info(f"[TECHBYNET] Usando dados reais: Nome={customer_name}, CPF={customer_cpf}, Phone={customer_phone}")
             # Limpar telefone (apenas números)
             customer_phone = ''.join(filter(str.isdigit, customer_phone))
             
