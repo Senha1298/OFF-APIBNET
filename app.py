@@ -1241,8 +1241,11 @@ def test_buckpay_direct():
         from buckpay_api import BuckPayAPI
         import time
         
-        # Usar a chave fornecida pelo usuário
-        buckpay_api = BuckPayAPI(secret_key="d78e25d6-f4bf-456a-be80-ee1324f2b638")
+        # Usar a chave fornecida pelo usuário e tentar diferentes configurações
+        secret_key = "d78e25d6-f4bf-456a-be80-ee1324f2b638"
+        
+        app.logger.info(f"[BUCKPAY-TEST] Testando com chave: {secret_key[:20]}...")
+        buckpay_api = BuckPayAPI(secret_key=secret_key)
         
         # Testar autenticação primeiro
         auth_test = buckpay_api.test_authentication()
@@ -1271,6 +1274,91 @@ def test_buckpay_direct():
         
     except Exception as e:
         app.logger.error(f"[TEST] Erro no teste direto: {e}")
+        return jsonify({'error': str(e)})
+
+@app.route('/force-buckpay-transaction')
+def force_buckpay_transaction():
+    """Força criação de transação via BuckPay para aparecer no gateway"""
+    try:
+        import requests
+        import time
+        
+        secret_key = "d78e25d6-f4bf-456a-be80-ee1324f2b638"
+        
+        # Diferentes URLs para testar
+        urls_to_test = [
+            "https://api.buckpay.com.br/v1/transactions",
+            "https://api.buckpay.com.br/transactions", 
+            "https://gateway.buckpay.com.br/v1/transactions",
+            "https://gateway.buckpay.com.br/transactions",
+            "https://api.realtechdev.com.br/v1/transactions",
+            "https://api.realtechdev.com.br/transactions"
+        ]
+        
+        # Payload de teste
+        payload = {
+            "external_id": f"FORCE_BUCKPAY_{int(time.time())}",
+            "payment_method": "pix",
+            "amount": 5000,  # R$ 50.00
+            "buyer": {
+                "name": "TESTE GATEWAY REAL",
+                "email": "gateway@teste.com",
+                "document": "12345678900",
+                "phone": "5511999999999"
+            },
+            "description": "Teste forçado gateway BuckPay"
+        }
+        
+        results = []
+        
+        for url in urls_to_test:
+            try:
+                headers = {
+                    'Authorization': f'Bearer {secret_key}',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'BuckPay Gateway Test',
+                    'Accept': 'application/json'
+                }
+                
+                app.logger.info(f"[FORCE-BUCKPAY] Tentando URL: {url}")
+                
+                response = requests.post(url, json=payload, headers=headers, timeout=30)
+                
+                result = {
+                    'url': url,
+                    'status': response.status_code,
+                    'response': response.text[:500],
+                    'success': response.status_code in [200, 201]
+                }
+                
+                results.append(result)
+                
+                # Se funcionou, retornar sucesso
+                if response.status_code in [200, 201]:
+                    app.logger.info(f"[FORCE-BUCKPAY] ✅ SUCESSO na URL: {url}")
+                    return jsonify({
+                        'success': True,
+                        'message': 'Transação BuckPay criada com sucesso!',
+                        'working_url': url,
+                        'transaction_data': result,
+                        'all_attempts': results
+                    })
+                    
+            except Exception as e:
+                results.append({
+                    'url': url,
+                    'error': str(e),
+                    'success': False
+                })
+        
+        return jsonify({
+            'success': False,
+            'message': 'Nenhuma URL funcionou',
+            'all_attempts': results,
+            'suggestion': 'Verificar se a chave da API está ativa no dashboard BuckPay'
+        })
+        
+    except Exception as e:
         return jsonify({'error': str(e)})
 
 @app.route('/buckpay-diagnostics')
