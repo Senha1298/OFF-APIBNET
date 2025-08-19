@@ -1722,5 +1722,10 @@ def provider_status():
             'error': str(e)
         }), 500
 
+@app.route('/test-payment')
+def test_payment():
+    """Página de teste para verificar redirecionamento de pagamento"""
+    return render_template('test_payment.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

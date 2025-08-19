@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Redirecionamento</title>
+    <script>
+        async function testPaymentMonitoring() {
+            const transactionId = 'e393477c-e18c-4580-a9f0-264bd20209f0';
+            console.log(`🚀 Testando monitoramento para transação: ${transactionId}`);
+            
+            try {
+                const statusUrl = `https://recoveryfy.replit.app/api/order/${transactionId}/status`;
+                console.log(`📡 URL de verificação: ${statusUrl}`);
+                
+                const response = await fetch(statusUrl);
+                const statusData = await response.json();
+                console.log('📊 Status recebido:', statusData);
+                console.log(`🎯 Status atual: "${statusData.status}"`);
+                
+                if (statusData.status === 'approved' || statusData.status === 'paid') {
+                    console.log('🎉 PAGAMENTO APROVADO! Redirecionando para /multa...');
+                    
+                    // Show redirect message
+                    document.getElementById('result').innerHTML = 
+                        '<h2 style="color: green;">✅ PAGAMENTO APROVADO!</h2>' +
+                        '<p>Redirecionando instantaneamente para /multa...</p>';
+                    
+                    // Redirect immediately
+                    console.log('🔄 Executando redirecionamento...');
+                    setTimeout(() => {
+                        window.location.href = '/multa';
+                    }, 1000); // 1 second delay to show message
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        `<h2 style="color: orange;">⏳ Status: ${statusData.status}</h2>`;
+                }
+            } catch (error) {
+                console.error('❌ Erro ao verificar status:', error);
+                document.getElementById('result').innerHTML = 
+                    '<h2 style="color: red;">❌ Erro ao verificar status</h2>';
+            }
+        }
+    </script>
+</head>
+<body style="padding: 20px; font-family: Arial;">
+    <h1>Teste de Redirecionamento de Pagamento</h1>
+    <p>ID da transação: <strong>e393477c-e18c-4580-a9f0-264bd20209f0</strong></p>
+    
+    <button onclick="testPaymentMonitoring()" style="padding: 10px 20px; font-size: 16px;">
+        🔄 Testar Verificação de Status
+    </button>
+    
+    <div id="result" style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+        Clique no botão para testar...
+    </div>
+</body>
+</html>
