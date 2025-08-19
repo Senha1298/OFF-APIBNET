@@ -10,11 +10,70 @@ class BuckPayAPI:
         self.secret_key = secret_key or os.environ.get('BUCKPAY_SECRET_KEY')
         if not self.secret_key:
             raise ValueError("BuckPay secret key not provided. Set BUCKPAY_SECRET_KEY environment variable.")
-        self.base_url = "https://api.realtechdev.com.br/v1"
+        
+        # Múltiplas URLs base para testar
+        self.base_urls = [
+            "https://api.realtechdev.com.br/v1",
+            "https://api.realtechdev.com.br",
+            "https://buckpay.realtechdev.com.br/v1",
+            "https://buckpay.realtechdev.com.br"
+        ]
+        self.base_url = self.base_urls[0]  # URL padrão
         
         # Log para debug
         logging.getLogger(__name__).info(f"BuckPay API initialized with key: {self.secret_key[:8]}...{self.secret_key[-8:]}")
         
+    def test_authentication(self):
+        """Testa diferentes métodos de autenticação com a API"""
+        test_payload = {
+            "external_id": f"AUTH_TEST_{int(time.time())}",
+            "payment_method": "pix",
+            "amount": 100
+        }
+        
+        # Diferentes formatos de autenticação
+        auth_methods = [
+            {"name": "Bearer Token", "headers": {"Authorization": f"Bearer {self.secret_key}"}},
+            {"name": "Basic Auth", "headers": {"Authorization": f"Basic {self.secret_key}"}},
+            {"name": "X-API-Key", "headers": {"X-API-Key": self.secret_key}},
+            {"name": "api-key", "headers": {"api-key": self.secret_key}},
+            {"name": "X-Auth-Token", "headers": {"X-Auth-Token": self.secret_key}},
+            {"name": "Token", "headers": {"Token": self.secret_key}}
+        ]
+        
+        for base_url in self.base_urls:
+            for auth_method in auth_methods:
+                try:
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'BuckPay API Client',
+                        **auth_method["headers"]
+                    }
+                    
+                    response = requests.post(
+                        f"{base_url}/transactions",
+                        json=test_payload,
+                        headers=headers,
+                        timeout=10
+                    )
+                    
+                    logging.getLogger(__name__).info(
+                        f"Test - URL: {base_url}, Auth: {auth_method['name']}, Status: {response.status_code}"
+                    )
+                    
+                    if response.status_code not in [401, 403]:
+                        return {
+                            "working_url": base_url,
+                            "working_auth": auth_method,
+                            "status": response.status_code,
+                            "response": response.text[:200]
+                        }
+                        
+                except Exception as e:
+                    logging.getLogger(__name__).error(f"Test error - {base_url} + {auth_method['name']}: {e}")
+        
+        return None
+
     def create_pix_transaction(self, transaction_data):
         """
         Cria uma transação PIX via BuckPay API
@@ -89,20 +148,52 @@ class BuckPayAPI:
             
             logging.getLogger(__name__).info(f"Payload BuckPay: {payload}")
             
-            # Headers for BuckPay API with Bearer token
-            headers = {
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {self.secret_key}',
-                'User-Agent': 'Buckpay API'
-            }
+            # Tentar diferentes métodos de autenticação
+            auth_methods = [
+                {"Authorization": f"Bearer {self.secret_key}"},
+                {"X-API-Key": self.secret_key},
+                {"api-key": self.secret_key},
+                {"Authorization": f"Basic {self.secret_key}"}
+            ]
             
-            # Make request to BuckPay
-            response = requests.post(
-                f"{self.base_url}/transactions",
-                json=payload,
-                headers=headers,
-                timeout=30
-            )
+            response = None
+            working_auth = None
+            
+            for base_url in self.base_urls:
+                for auth_headers in auth_methods:
+                    try:
+                        headers = {
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'BuckPay API Client',
+                            'Accept': 'application/json',
+                            **auth_headers
+                        }
+                        
+                        logging.getLogger(__name__).info(f"Tentando URL: {base_url} com auth: {list(auth_headers.keys())[0]}")
+                        
+                        response = requests.post(
+                            f"{base_url}/transactions",
+                            json=payload,
+                            headers=headers,
+                            timeout=30
+                        )
+                        
+                        # Se não for erro de autenticação, usar esta configuração
+                        if response.status_code not in [401, 403]:
+                            working_auth = auth_headers
+                            self.base_url = base_url
+                            logging.getLogger(__name__).info(f"✅ Autenticação funcionando: {base_url} + {list(auth_headers.keys())[0]}")
+                            break
+                            
+                    except Exception as e:
+                        logging.getLogger(__name__).error(f"Erro na tentativa {base_url}: {e}")
+                        continue
+                
+                if working_auth:
+                    break
+            
+            if not response:
+                response = requests.post(f"{self.base_urls[0]}/transactions", json=payload, headers={'Content-Type': 'application/json'}, timeout=30)
             
             logging.getLogger(__name__).info(f"BuckPay Response Status: {response.status_code}")
             logging.getLogger(__name__).info(f"BuckPay Response: {response.text}")

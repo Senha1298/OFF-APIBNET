@@ -445,8 +445,48 @@ def generate_pix_multa():
                 app.logger.info(f"[PROD] PIX para multa gerado com sucesso via BuckPay: {pix_data}")
                 return jsonify(pix_data)
             else:
-                # Fallback para MEDIUS PAG em caso de erro
-                app.logger.info("[PROD] Utilizando fallback MEDIUS PAG para multa devido a erro na BuckPay")
+                # Se BuckPay falhou, tentar com TechByNet como segundo fallback
+                app.logger.info("[PROD] BuckPay falhou, tentando TechByNet como fallback para multa")
+                try:
+                    from techbynet_api import create_techbynet_api
+                    
+                    techbynet_api = create_techbynet_api('e884b37a-987a-49ba-b860-ae6b66b65f79')
+                    
+                    techbynet_data = {
+                        'nome': user_name,
+                        'cpf': user_cpf,
+                        'email': default_email,
+                        'phone': user_phone
+                    }
+                    
+                    techbynet_result = techbynet_api.create_pix_transaction(
+                        customer_data=techbynet_data,
+                        amount=amount,
+                        phone=user_phone,
+                        postback_url=f"https://{request.host}/techbynet-webhook"
+                    )
+                    
+                    if techbynet_result.get('success'):
+                        app.logger.info(f"[PROD] ✅ TechByNet funcionou como fallback para multa: {techbynet_result.get('transaction_id')}")
+                        
+                        return jsonify({
+                            'success': True,
+                            'data': {
+                                'transaction_id': techbynet_result.get('transaction_id'),
+                                'pix_code': techbynet_result.get('pix_code'),
+                                'qr_code_base64': techbynet_result.get('qr_code_base64'),
+                                'amount': amount,
+                                'provider': 'TechByNet'
+                            }
+                        })
+                    else:
+                        raise Exception("TechByNet também falhou")
+                        
+                except Exception as techbynet_error:
+                    app.logger.error(f"[PROD] TechByNet fallback também falhou: {techbynet_error}")
+                
+                # Fallback para MEDIUS PAG em caso de erro na BuckPay e TechByNet
+                app.logger.info("[PROD] Utilizando fallback MEDIUS PAG para multa devido a erro na BuckPay e TechByNet")
                 
                 try:
                     from medius_pag_api import create_medius_pag_api
@@ -472,7 +512,7 @@ def generate_pix_multa():
                         
                 except Exception as fallback_error:
                     app.logger.error(f"[PROD] Erro no fallback MEDIUS PAG para multa: {fallback_error}")
-                    raise Exception(f"Erro ao processar transação de multa: BuckPay e MEDIUS PAG falharam")
+                    raise Exception(f"Erro ao processar transação de multa: BuckPay, TechByNet e MEDIUS PAG falharam")
                 raise Exception("Falha na criação da transação MEDIUS PAG para multa")
                 
         except Exception as e:
@@ -1197,57 +1237,36 @@ def techbynet_webhook():
 def test_buckpay_direct():
     """Endpoint para testar BuckPay diretamente com dados simples"""
     try:
-        import requests
+        # Teste com diferentes configurações da BuckPay
+        from buckpay_api import BuckPayAPI
         import time
         
-        secret_key = os.environ.get('BUCKPAY_SECRET_KEY')
-        if not secret_key:
-            return jsonify({'error': 'BUCKPAY_SECRET_KEY não configurada'})
+        # Usar a chave fornecida pelo usuário
+        buckpay_api = BuckPayAPI(secret_key="d78e25d6-f4bf-456a-be80-ee1324f2b638")
         
-        # Teste com dados mínimos
-        payload = {
-            "external_id": f"TEST_{int(time.time())}",
-            "payment_method": "pix",
-            "amount": 1000,  # R$ 10.00
-            "buyer": {
-                "name": "TESTE USUARIO",
-                "email": "teste@teste.com", 
-                "document": "12345678900",
-                "phone": "5511999999999"
-            },
-            "product": {
-                "name": "Teste Direto"
-            }
+        # Testar autenticação primeiro
+        auth_test = buckpay_api.test_authentication()
+        if auth_test:
+            app.logger.info(f"[BUCKPAY-TEST] ✅ Autenticação funcionando: {auth_test}")
+        
+        # Dados de teste
+        test_data = {
+            'amount': 10.0,
+            'customer_name': 'TESTE USUARIO',
+            'customer_cpf': '12345678900',
+            'customer_email': 'teste@teste.com',
+            'customer_phone': '11999999999',
+            'description': 'Teste BuckPay API'
         }
         
-        headers = {
-            'Authorization': f'Bearer {secret_key}',
-            'Content-Type': 'application/json',
-            'User-Agent': 'Buckpay API'
-        }
-        
-        app.logger.info(f"[TEST] Testando BuckPay com payload: {payload}")
-        app.logger.info(f"[TEST] Headers: Authorization: Bearer {secret_key[:15]}...")
-        
-        response = requests.post(
-            'https://api.realtechdev.com.br/v1/transactions',
-            json=payload,
-            headers=headers,
-            timeout=30
-        )
-        
-        app.logger.info(f"[TEST] Status: {response.status_code}")
-        app.logger.info(f"[TEST] Response: {response.text}")
+        # Criar transação de teste
+        result = buckpay_api.create_pix_transaction(test_data)
         
         return jsonify({
-            'success': response.status_code == 200,
-            'status_code': response.status_code,
-            'response_text': response.text,
-            'headers_sent': {
-                'Authorization': f'Bearer {secret_key[:15]}...',
-                'Content-Type': 'application/json'
-            },
-            'payload_sent': payload
+            'success': result.get('success', False),
+            'result': result,
+            'auth_test': auth_test,
+            'test_data': test_data
         })
         
     except Exception as e:
