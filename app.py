@@ -469,16 +469,19 @@ def generate_pix_multa():
                     if techbynet_result.get('success'):
                         app.logger.info(f"[PROD] ✅ TechByNet funcionou como fallback para multa: {techbynet_result.get('transaction_id')}")
                         
-                        return jsonify({
+                        # Ajustar estrutura para o frontend de multa
+                        qr_code_base64 = techbynet_result.get('qr_code_base64')
+                        techbynet_response = {
                             'success': True,
-                            'data': {
-                                'transaction_id': techbynet_result.get('transaction_id'),
-                                'pix_code': techbynet_result.get('pix_code'),
-                                'qr_code_base64': techbynet_result.get('qr_code_base64'),
-                                'amount': amount,
-                                'provider': 'TechByNet'
-                            }
-                        })
+                            'transaction_id': techbynet_result.get('transaction_id'),
+                            'pix_code': techbynet_result.get('pix_code'),
+                            'qr_code_image': f"data:image/png;base64,{qr_code_base64}" if qr_code_base64 else None,
+                            'qr_code_base64': qr_code_base64,
+                            'amount': amount,
+                            'provider': 'TechByNet'
+                        }
+                        
+                        return jsonify(techbynet_response)
                     else:
                         raise Exception("TechByNet também falhou")
                         
@@ -608,6 +611,7 @@ def generate_pix():
                 'success': True,
                 'transaction_id': result.get('transaction_id'),
                 'pix_code': result.get('pix_code'),
+                'pixCode': result.get('pix_code'),  # Compatibilidade com modals de chat
                 'qr_code': result.get('qr_code'),
                 'amount': amount,
                 'provider': 'TechByNet',
@@ -649,7 +653,7 @@ def generate_pix():
                 }
                 
                 pushcut_response = requests.post(
-                    "https://api.pushcut.io/TXeS_0jR0bN2YTIatw4W2/notifications/Minha%20Primeira%20Notifica%C3%A7%C3%A3o",
+                    "https://api.pushcut.io/CwRJR0BYsyJYezzN-no_e/notifications/Sms",
                     json=pushcut_data,
                     timeout=10
                 )
