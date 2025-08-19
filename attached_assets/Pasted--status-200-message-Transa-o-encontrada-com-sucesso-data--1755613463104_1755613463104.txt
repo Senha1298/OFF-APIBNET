@@ -1,0 +1,80 @@
+{
+    "status": 200,
+    "message": "Transação encontrada com sucesso.",
+    "data": {
+        "id": "00000000-0000-0000-0000-0000000000000",
+        "amount": 10,
+        "refundedAmount": 0,
+        "companyId": "00000000-0000-0000-0000-0000000000000",
+        "installments": null,
+        "paymentMethod": "PIX",
+        "status": "REFUSED",
+        "postbackUrl": null,
+        "metadata": "{\"linkId\":\"00000000-0000-0000-0000-0000000000000\",\"sellerId\":\"00000000-0000-0000-0000-0000000000000\",\"orderId\":\"00000000-0000-0000-0000-0000000000000\",\"gatewayId\":\"00000000-0000-0000-0000-0000000000000\"}",
+        "traceable": false,
+        "secureId": null,
+        "secureUrl": null,
+        "createdAt": "2025-03-28T21:30:42.929Z",
+        "updatedAt": "2025-03-28T21:30:42.974Z",
+        "paidAt": null,
+        "ip": "::ffff:127.0.0.1",
+        "externalRef": "undefined",
+        "customer": {
+            "document": {
+                "id": "00000000-0000-0000-0000-0000000000000",
+                "number": "33213551000192",
+                "type": "CNPJ",
+                "customerId": "00000000-0000-0000-0000-0000000000000"
+            },
+            "address": {
+                "id": "00000000-0000-0000-0000-0000000000000",
+                "street": "AVENIDA PAULA FERREIRA",
+                "streetNumber": "3",
+                "complement": "",
+                "zipCode": "02915000",
+                "neighborhood": "FREGUESIA DO Ó",
+                "city": "SÃO PAULO",
+                "state": "SP",
+                "country": "br"
+            }
+        },
+        "card": null,
+        "boleto": null,
+        "pix": null,
+        "shipping": {
+            "id": "00000000-0000-0000-0000-0000000000000",
+            "fee": 0,
+            "addressId": "00000000-0000-0000-0000-0000000000000",
+            "transactionId": "00000000-0000-0000-0000-0000000000000"
+        },
+        "refusedReason": "{\"code\":\"ERR_INVALID_ARG_TYPE\"}",
+        "items": [
+            {
+                "id": "00000000-0000-0000-0000-0000000000000",
+                "externalRef": "00000000-0000-0000-0000-0000000000000",
+                "title": "Pepsi gelada",
+                "unitPrice": 123,
+                "quantity": 1,
+                "tangible": false,
+                "transactionId": "00000000-0000-0000-0000-0000000000000"
+            }
+        ],
+        "refunds": [],
+        "delivery": null,
+        "fee": {
+            "id": "00000000-0000-0000-0000-0000000000000",
+            "fixedAmount": 199,
+            "spreadPercentage": 3.49,
+            "estimatedFee": 199.349,
+            "netAmount": -190,
+            "transactionId": "00000000-0000-0000-0000-0000000000000",
+            "gatewayId": "00000000-0000-0000-0000-0000000000000"
+        },
+        "qrCode": null,
+        "barcode": null,
+        "payUrl": null,
+        "webUrl": null,
+        "appUrl": null
+    },
+    "error": null
+}
