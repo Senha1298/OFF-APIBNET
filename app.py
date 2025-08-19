@@ -380,10 +380,21 @@ def generate_pix_multa():
 
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
-            'nome': request_data.get('nome', 'JOÃO DA SILVA SANTOS'),
-            'cpf': request_data.get('cpf', '123.456.789-00'),
-            'phone': request_data.get('telefone', '11999999999')
+            'nome': request_data.get('nome', ''),
+            'cpf': request_data.get('cpf', ''),
+            'phone': request_data.get('telefone', '')
         }
+        
+        # Se não recebeu dados do frontend, algo está errado
+        if not customer_data['nome'] or not customer_data['cpf']:
+            app.logger.warning(f"[PROD] ⚠️ Dados incompletos recebidos: {customer_data}")
+            # Usar dados mínimos apenas em caso de emergência
+            if not customer_data['nome']:
+                customer_data['nome'] = 'CLIENTE SEM NOME'
+            if not customer_data['cpf']:
+                customer_data['cpf'] = '00000000000'
+            if not customer_data['phone']:
+                customer_data['phone'] = '11999999999'
         
         app.logger.info(f"[PROD] Dados do cliente recebidos: Nome={customer_data['nome']}, CPF={customer_data['cpf']}, Phone={customer_data['phone']}")
 
@@ -564,10 +575,21 @@ def generate_pix():
 
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
-            'nome': request_data.get('nome', 'JOÃO DA SILVA SANTOS'),
-            'cpf': request_data.get('cpf', '123.456.789-00'),
-            'phone': request_data.get('telefone', '11999999999')
+            'nome': request_data.get('nome', ''),
+            'cpf': request_data.get('cpf', ''),
+            'phone': request_data.get('telefone', '')
         }
+        
+        # Se não recebeu dados do frontend, algo está errado
+        if not customer_data['nome'] or not customer_data['cpf']:
+            app.logger.warning(f"[PROD] ⚠️ Dados incompletos recebidos: {customer_data}")
+            # Usar dados mínimos apenas em caso de emergência
+            if not customer_data['nome']:
+                customer_data['nome'] = 'CLIENTE SEM NOME'
+            if not customer_data['cpf']:
+                customer_data['cpf'] = '00000000000'
+            if not customer_data['phone']:
+                customer_data['phone'] = '11999999999'
         
         app.logger.info(f"[PROD] Dados do cliente recebidos no endpoint PIX: Nome={customer_data['nome']}, CPF={customer_data['cpf']}, Phone={customer_data['phone']}")
 
@@ -1022,12 +1044,23 @@ def generate_pix_techbynet():
         api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
         app.logger.info("[TECHBYNET] API inicializada com chave fornecida")
 
-        # Pegar dados do cliente da sessão
-        customer_data = session.get('customer_data', {
-            'nome': 'JOÃO DA SILVA SANTOS',
-            'cpf': '123.456.789-00',
-            'phone': '11999999999'
-        })
+        # Pegar dados enviados pelo frontend (do localStorage)
+        request_data = request.get_json() or {}
+        customer_data = {
+            'nome': request_data.get('nome', ''),
+            'cpf': request_data.get('cpf', ''),
+            'phone': request_data.get('telefone', '')
+        }
+        
+        # Se não recebeu dados do frontend, algo está errado
+        if not customer_data['nome'] or not customer_data['cpf']:
+            app.logger.warning(f"[PROD] ⚠️ Dados incompletos recebidos no endpoint TechByNet: {customer_data}")
+            if not customer_data['nome']:
+                customer_data['nome'] = 'CLIENTE SEM NOME'
+            if not customer_data['cpf']:
+                customer_data['cpf'] = '00000000000'
+            if not customer_data['phone']:
+                customer_data['phone'] = '11999999999'
 
         # Usar telefone do frontend ou fallback
         user_phone = request_data.get('telefone', '').strip()
@@ -1130,10 +1163,21 @@ def generate_pix_multa_techbynet():
         
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
-            'nome': request_data.get('nome', 'JOÃO DA SILVA SANTOS'),
-            'cpf': request_data.get('cpf', '123.456.789-00'),
-            'phone': request_data.get('telefone', '11999999999')
+            'nome': request_data.get('nome', ''),
+            'cpf': request_data.get('cpf', ''),
+            'phone': request_data.get('telefone', '')
         }
+        
+        # Se não recebeu dados do frontend, algo está errado
+        if not customer_data['nome'] or not customer_data['cpf']:
+            app.logger.warning(f"[PROD] ⚠️ Dados incompletos recebidos: {customer_data}")
+            # Usar dados mínimos apenas em caso de emergência
+            if not customer_data['nome']:
+                customer_data['nome'] = 'CLIENTE SEM NOME'
+            if not customer_data['cpf']:
+                customer_data['cpf'] = '00000000000'
+            if not customer_data['phone']:
+                customer_data['phone'] = '11999999999'
         
         app.logger.info(f"[PROD] Dados do cliente recebidos no endpoint TechByNet: Nome={customer_data['nome']}, CPF={customer_data['cpf']}, Phone={customer_data['phone']}")
 
