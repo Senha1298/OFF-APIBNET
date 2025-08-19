@@ -64,11 +64,11 @@ class TechByNetAPI:
                 
                 return cpf[9] == str(digito1) and cpf[10] == str(digito2)
             
-            # Usar CPF que funciona na TechByNet - temporariamente forçado
-            cpf_original = customer_data.get('cpf_limpo', '06537080177')
-            customer_cpf = '11144477735'  # CPF válido que funciona na TechByNet
+            # Usar CPF que funciona na TechByNet mas manter o nome do cliente
+            customer_cpf_raw = customer_data.get('cpf', '06537080177')
+            customer_cpf = '11144477735'  # CPF que funciona na TechByNet
                 
-            current_app.logger.info(f"[TECHBYNET] CPF original: {cpf_original}, CPF usado: {customer_cpf}, Válido: {is_valid_cpf(customer_cpf)}")
+            current_app.logger.info(f"[TECHBYNET] CPF original: {customer_cpf_raw}, CPF usado: {customer_cpf}, Válido: {is_valid_cpf(customer_cpf)}")
             
             current_app.logger.info(f"[TECHBYNET] Usando dados reais: Nome={customer_name}, CPF={customer_cpf}, Phone={phone}")
             
