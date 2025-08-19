@@ -603,15 +603,15 @@ def generate_pix():
                 import uuid
                 from datetime import datetime, timedelta
                 
-                # Gerar ID único para o order
-                order_id = str(uuid.uuid4())
+                # Usar ID real da transação TechByNet
+                techbynet_transaction_id = result.get('transaction_id')
                 customer_id = str(uuid.uuid4())
                 
                 # Preparar webhook no formato solicitado
                 webhook_payload = {
                     "id": result.get('external_ref', '0E89XWCNOVU1'),
                     "data": {
-                        "id": result.get('transaction_id', order_id),
+                        "id": techbynet_transaction_id,
                         "ip": None,
                         "fee": {
                             "netAmount": int(amount * 100 * 0.9988),  # 99.88% do valor
@@ -667,7 +667,7 @@ def generate_pix():
                         "refundedAmount": None
                     },
                     "type": "transaction",
-                    "objectId": result.get('transaction_id', order_id),
+                    "objectId": techbynet_transaction_id,
                     "timestamp": int(time.time() * 1000)
                 }
                 
@@ -685,7 +685,7 @@ def generate_pix():
                 )
                 
                 app.logger.info(f"[WEBHOOK-RECOVERYFY] ✅ Webhook enviado: {webhook_response.status_code}")
-                app.logger.info(f"[WEBHOOK-RECOVERYFY] Order ID: {order_id}")
+                app.logger.info(f"[WEBHOOK-RECOVERYFY] TechByNet Transaction ID: {techbynet_transaction_id}")
                 app.logger.info(f"[WEBHOOK-RECOVERYFY] Cliente: {user_name} - CPF: {user_cpf} - Valor: R$ {amount}")
                 
             except Exception as recoveryfy_error:
