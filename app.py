@@ -366,17 +366,18 @@ def multa():
 
 @app.route('/generate-pix-multa', methods=['POST'])
 def generate_pix_multa():
+    """Endpoint para gerar PIX da multa usando SOMENTE TechByNet"""
     try:
-        from buckpay_api import create_buckpay_api
+        from techbynet_api import create_techbynet_api
 
-        app.logger.info("[PROD] Iniciando geração de PIX via BuckPay para multa...")
+        app.logger.info("[PROD] Iniciando geração de PIX via TechByNet para multa...")
 
         # Pegar dados do JSON request (telefone enviado pelo frontend)
         request_data = request.get_json() or {}
 
-        # Inicializa a API BuckPay usando a secret key configurada
-        api = create_buckpay_api()
-        app.logger.info("[PROD] BuckPay API inicializada para multa")
+        # Inicializa a API TechByNet
+        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
+        app.logger.info("[PROD] TechByNet API inicializada para multa")
 
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
@@ -398,166 +399,72 @@ def generate_pix_multa():
         
         app.logger.info(f"[PROD] Dados do cliente recebidos: Nome={customer_data['nome']}, CPF={customer_data['cpf']}, Phone={customer_data['phone']}")
 
-        # Usar telefone do frontend (localStorage) ou fallback para dados padrão
+        # Usar telefone do frontend (localStorage)
         user_phone = request_data.get('telefone', '').strip()
         if not user_phone or len(user_phone) < 10:
-            user_phone = "11987689080"  # Fallback sem formatação para BuckPay
-            app.logger.warning(f"[PROD] Telefone não fornecido ou inválido para multa, usando fallback: {user_phone}")
+            user_phone = "11987689080"
+            app.logger.warning(f"[PROD] Telefone não fornecido ou inválido para multa, usando padrão: {user_phone}")
         else:
-            # Remover formatação para BuckPay (só números)
+            # Remover formatação (só números)
             user_phone = ''.join(filter(str.isdigit, user_phone))
             app.logger.info(f"[PROD] Usando telefone fornecido pelo frontend para multa: {user_phone}")
 
-        # Dados padrão fornecidos pelo usuário
+        # Dados padrão
         default_email = "gerarpagamento@gmail.com"
 
         # Dados do usuário para a transação PIX da multa
         user_name = customer_data['nome']
-        user_cpf = customer_data['cpf'].replace('.', '').replace('-', '')  # Remove formatação
+        user_cpf = customer_data['cpf'].replace('.', '').replace('-', '')
         amount = 58.60  # Valor fixo de R$ 58,60 para multa
 
         app.logger.info(f"[PROD] Dados do usuário para multa: Nome={user_name}, CPF={user_cpf}, Email={default_email}, Telefone={user_phone}")
 
-        # Criar nova transação BuckPay para obter PIX real da multa
-        app.logger.info(f"[PROD] Criando transação BuckPay real para multa: {user_name}")
+        # Criar transação TechByNet para multa
+        app.logger.info(f"[PROD] Criando transação TechByNet para multa: {user_name}")
         
-        try:
-            transaction_data = {
+        customer_info = {
+            'nome': user_name,
+            'cpf': user_cpf,
+            'email': default_email,
+            'phone': user_phone
+        }
+        
+        # Criar transação TechByNet
+        pix_data = api.create_pix_transaction(
+            customer_data=customer_info,
+            amount=amount,
+            phone=user_phone,
+            postback_url=f"https://{request.host}/techbynet-webhook"
+        )
+        
+        if pix_data.get('success'):
+            app.logger.info(f"[PROD] ✅ Transação TechByNet para multa criada: {pix_data.get('transaction_id')}")
+            
+            # Ajustar estrutura para o frontend de multa
+            response = {
+                'success': True,
+                'transaction_id': pix_data.get('transaction_id'),
+                'pix_code': pix_data.get('pix_code'),
+                'qr_code_base64': pix_data.get('qr_code_base64'),
+                'qr_code_image': pix_data.get('qr_code_image'),
                 'amount': amount,
-                'customer_name': user_name,
-                'customer_cpf': user_cpf,
-                'customer_email': default_email,
-                'customer_phone': user_phone,
-                'description': 'Multa por declaração incorreta'
+                'provider': 'TechByNet'
             }
             
-            # Criar transação real na BuckPay
-            pix_data = api.create_pix_transaction(transaction_data)
-            
-            if pix_data.get('success', False):
-                app.logger.info(f"[PROD] ✅ Transação BuckPay para multa criada: {pix_data.get('transaction_id')}")
-                
-                # Verificar se temos PIX code e QR code da BuckPay
-                if pix_data.get('pix_code'):
-                    app.logger.info(f"[PROD] ✅ PIX real da BuckPay para multa obtido: {pix_data['pix_code'][:50]}...")
-                    
-                    # Garantir que temos QR code base64
-                    if not pix_data.get('qr_code_base64'):
-                        app.logger.info(f"[PROD] Gerando QR code para multa a partir do PIX da BuckPay")
-                        from brazilian_pix import create_brazilian_pix_provider
-                        temp_provider = create_brazilian_pix_provider()
-                        qr_code_base64 = temp_provider.generate_qr_code_image(pix_data['pix_code'])
-                        pix_data['qr_code_base64'] = qr_code_base64
-                    
-                    # Garantir formato correto para o frontend
-                    if not pix_data['qr_code_base64'].startswith('data:image'):
-                        pix_data['qr_code_image'] = f"data:image/png;base64,{pix_data['qr_code_base64']}"
-                    else:
-                        pix_data['qr_code_image'] = pix_data['qr_code_base64']
-                        
-                app.logger.info(f"[PROD] PIX para multa gerado com sucesso via BuckPay: {pix_data}")
-                return jsonify(pix_data)
-            else:
-                # Se BuckPay falhou, tentar com TechByNet como segundo fallback
-                app.logger.info("[PROD] BuckPay falhou, tentando TechByNet como fallback para multa")
-                try:
-                    from techbynet_api import create_techbynet_api
-                    
-                    techbynet_api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
-                    
-                    techbynet_data = {
-                        'nome': user_name,
-                        'cpf': user_cpf,
-                        'email': default_email,
-                        'phone': user_phone
-                    }
-                    
-                    techbynet_result = techbynet_api.create_pix_transaction(
-                        customer_data=techbynet_data,
-                        amount=amount,
-                        phone=user_phone,
-                        postback_url=f"https://{request.host}/techbynet-webhook"
-                    )
-                    
-                    if techbynet_result.get('success'):
-                        app.logger.info(f"[PROD] ✅ TechByNet funcionou como fallback para multa: {techbynet_result.get('transaction_id')}")
-                        
-                        # Ajustar estrutura para o frontend de multa
-                        qr_code_base64 = techbynet_result.get('qr_code_base64')
-                        techbynet_response = {
-                            'success': True,
-                            'transaction_id': techbynet_result.get('transaction_id'),
-                            'pix_code': techbynet_result.get('pix_code'),
-                            'qr_code_image': f"data:image/png;base64,{qr_code_base64}" if qr_code_base64 else None,
-                            'qr_code_base64': qr_code_base64,
-                            'amount': amount,
-                            'provider': 'TechByNet'
-                        }
-                        
-                        return jsonify(techbynet_response)
-                    else:
-                        raise Exception("TechByNet também falhou")
-                        
-                except Exception as techbynet_error:
-                    app.logger.error(f"[PROD] TechByNet fallback também falhou: {techbynet_error}")
-                
-                # Fallback para MEDIUS PAG em caso de erro na BuckPay e TechByNet
-                app.logger.info("[PROD] Utilizando fallback MEDIUS PAG para multa devido a erro na BuckPay e TechByNet")
-                
-                try:
-                    from medius_pag_api import create_medius_pag_api
-                    fallback_api = create_medius_pag_api()
-                    
-                    fallback_data = {
-                        'amount': amount,
-                        'customer_name': user_name,
-                        'customer_cpf': user_cpf,
-                        'customer_email': default_email,
-                        'customer_phone': f"({user_phone[:2]}) {user_phone[2:7]}-{user_phone[7:]}" if len(user_phone) >= 10 else "(11) 98768-9080",
-                        'description': 'Multa por declaração incorreta'
-                    }
-                    
-                    pix_data = fallback_api.create_pix_transaction(fallback_data)
-                    
-                    if pix_data.get('success', False):
-                        app.logger.info("[PROD] ✅ Fallback MEDIUS PAG para multa executado com sucesso")
-                        pix_data['provider'] = 'MEDIUS PAG (Fallback)'
-                        return jsonify(pix_data)
-                    else:
-                        raise Exception(f"Fallback MEDIUS PAG para multa também falhou: {pix_data.get('error', 'Erro desconhecido')}")
-                        
-                except Exception as fallback_error:
-                    app.logger.error(f"[PROD] Erro no fallback MEDIUS PAG para multa: {fallback_error}")
-                    raise Exception(f"Erro ao processar transação de multa: BuckPay, TechByNet e MEDIUS PAG falharam")
-                raise Exception("Falha na criação da transação MEDIUS PAG para multa")
-                
-        except Exception as e:
-            app.logger.error(f"[PROD] ❌ Erro na API MEDIUS PAG para multa: {e}")
-            
-            # Fallback para PIX brasileiro
-            app.logger.info(f"[PROD] Fallback: Tentando gerar PIX brasileiro para multa...")
-            from brazilian_pix import create_brazilian_pix_provider
-            
-            fallback_provider = create_brazilian_pix_provider()
-            fallback_result = fallback_provider.create_pix_payment(
-                amount=amount,
-                customer_name=user_name,
-                customer_cpf=user_cpf,
-                customer_email=default_email
-            )
-            
-            if fallback_result.get('success'):
-                app.logger.info(f"[PROD] ✅ PIX brasileiro para multa gerado com sucesso")
-                return jsonify(fallback_result)
-            else:
-                app.logger.error(f"[PROD] ❌ Erro no fallback PIX brasileiro para multa: {fallback_result}")
-                raise Exception("Falha em ambos os sistemas PIX para multa")
+            return jsonify(response)
+        else:
+            error_msg = pix_data.get('error', 'Erro desconhecido')
+            app.logger.error(f"[PROD] ❌ TechByNet falhou para multa: {error_msg}")
+            return jsonify({
+                'success': False,
+                'error': f'TechByNet falhou: {error_msg}'
+            }), 400
     
     except Exception as e:
         app.logger.error(f"[PROD] ❌ Erro geral ao gerar PIX para multa: {e}")
         return jsonify({
             'success': False,
-            'error': 'Erro interno do servidor ao gerar PIX para multa'
+            'error': f'Erro interno do servidor: {str(e)}'
         }), 500
 
 @app.route('/generate-pix', methods=['POST'])
@@ -694,74 +601,11 @@ def generate_pix():
             return jsonify(pix_data)
         
         else:
-            app.logger.error(f"[PROD] ❌ Falha na TechByNet: {result.get('error')}")
-            
-            # Fallback para BuckPay se TechByNet falhar
-            app.logger.info("[PROD] 🔄 Tentando fallback para BuckPay...")
-            try:
-                buckpay_api = create_buckpay_api()
-                
-                transaction_data = {
-                    'amount': amount,
-                    'customer_name': user_name,
-                    'customer_cpf': user_cpf,
-                    'customer_email': user_email,
-                    'customer_phone': user_phone,
-                    'description': 'Mindset avançado'
-                }
-                
-                buckpay_result = buckpay_api.create_pix_transaction(transaction_data)
-                
-                if buckpay_result.get('success'):
-                    app.logger.info(f"[PROD] ✅ Fallback BuckPay bem-sucedido: {buckpay_result.get('transaction_id')}")
-                    
-                    pix_data = buckpay_result.get('data', {})
-                    pix_data.update({
-                        'success': True,
-                        'provider': 'BuckPay (Fallback)',
-                        'webhook_url': f"https://{request.host}/buckpay-webhook"
-                    })
-                    
-                    if buckpay_result.get('qr_code_base64'):
-                        pix_data['qr_code_base64'] = buckpay_result['qr_code_base64']
-                        pix_data['qr_code_image'] = f"data:image/png;base64,{buckpay_result['qr_code_base64']}"
-                    
-                    return jsonify(pix_data)
-                    
-            except Exception as fallback_error:
-                app.logger.error(f"[PROD] ❌ Fallback BuckPay também falhou: {fallback_error}")
-            
-            # Fallback final para PIX brasileiro
-            app.logger.info(f"[PROD] Fallback: Tentando gerar PIX brasileiro...")
-            try:
-                from brazilian_pix import create_brazilian_pix_provider
-                
-                fallback_provider = create_brazilian_pix_provider()
-                fallback_result = fallback_provider.create_pix_payment(
-                    amount=amount,
-                    customer_name=user_name,
-                    customer_cpf=user_cpf,
-                    customer_email=user_email
-                )
-                
-                if fallback_result.get('success'):
-                    app.logger.info(f"[PROD] ✅ PIX brasileiro para chat gerado com sucesso")
-                    
-                    # Adicionar campos para compatibilidade com chat
-                    fallback_result['pixCode'] = fallback_result.get('pix_code')
-                    fallback_result['transactionId'] = fallback_result.get('transaction_id', fallback_result.get('order_id'))
-                    
-                    return jsonify(fallback_result)
-                else:
-                    app.logger.error(f"[PROD] ❌ Erro no fallback PIX brasileiro: {fallback_result}")
-                    
-            except Exception as brazilian_error:
-                app.logger.error(f"[PROD] ❌ Erro no fallback PIX brasileiro: {brazilian_error}")
-            
+            error_msg = result.get('error', 'Erro desconhecido')
+            app.logger.error(f"[PROD] ❌ TechByNet falhou para chat: {error_msg}")
             return jsonify({
                 'success': False,
-                'error': f"Todos os provedores falharam: TechByNet, BuckPay e PIX brasileiro.",
-                'provider': 'Fallback completo'
+                'error': f'TechByNet falhou: {error_msg}'
             }), 400
     
     except Exception as e:
