@@ -6,8 +6,10 @@ import requests
 
 class BuckPayAPI:
     def __init__(self, secret_key=None):
-        # Use provided secret key or fallback to updated one
-        self.secret_key = secret_key or "sk_live_4d9b5e0c709a556598a256398c7d13f5"
+        # Use provided secret key or get from environment
+        self.secret_key = secret_key or os.environ.get('BUCKPAY_SECRET_KEY')
+        if not self.secret_key:
+            raise ValueError("BuckPay secret key not provided. Set BUCKPAY_SECRET_KEY environment variable.")
         self.base_url = "https://api.realtechdev.com.br/v1"
         
         # Log para debug
