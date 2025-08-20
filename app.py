@@ -295,54 +295,16 @@ def index():
 
 @app.route('/<path:cpf>')
 def index_with_cpf(cpf):
-    # Remove any formatting from CPF (dots and dashes)
-    clean_cpf = re.sub(r'[^0-9]', '', cpf)
+    # Quando há CPF na URL, sempre mostrar modal de busca de CPF
+    app.logger.info(f"[PROD] Acessando site com CPF na URL: {cpf} - mostrando modal de CPF")
     
-    # Validate CPF format (11 digits)
-    if len(clean_cpf) != 11:
-        app.logger.error(f"[PROD] CPF inválido: {cpf}")
-        # Show CPF search form on main template
-        today_date = datetime.now().strftime('%d/%m/%Y')
-        default_data = {
-            'nome': 'USUÁRIO',
-            'cpf': '000.000.000-00',
-            'today_date': today_date
-        }
-        return render_template('index.html', customer=default_data, show_cpf_search=True)
-    
-    # Get user data from API
-    cpf_data = get_cpf_data(clean_cpf)
-    
-    if cpf_data:
-        # Format CPF for display
-        formatted_cpf = f"{clean_cpf[:3]}.{clean_cpf[3:6]}.{clean_cpf[6:9]}-{clean_cpf[9:]}"
-        
-        # Get current date in Brazilian format
-        today = datetime.now().strftime("%d/%m/%Y")
-        
-        customer_data = {
-            'nome': cpf_data['nome'],
-            'cpf': formatted_cpf,
-            'data_nascimento': cpf_data['data_nascimento'],
-            'nome_mae': cpf_data['mae'],  # Fixed field name from new API
-            'sexo': cpf_data['sexo'],
-            'phone': '',  # Not available from this API
-            'today_date': today
-        }
-        
-        session['customer_data'] = customer_data
-        app.logger.info(f"[PROD] Dados encontrados para CPF: {formatted_cpf}")
-        return render_template('index.html', customer=customer_data, show_confirmation=True, save_to_localStorage=True)
-    else:
-        app.logger.error(f"[PROD] Dados não encontrados para CPF: {cpf}")
-        # Show CPF search form on main template
-        today_date = datetime.now().strftime('%d/%m/%Y')
-        default_data = {
-            'nome': 'USUÁRIO',
-            'cpf': '000.000.000-00',
-            'today_date': today_date
-        }
-        return render_template('index.html', customer=default_data, show_cpf_search=True)
+    today_date = datetime.now().strftime('%d/%m/%Y')
+    default_data = {
+        'nome': 'USUÁRIO',
+        'cpf': '000.000.000-00',
+        'today_date': today_date
+    }
+    return render_template('index.html', customer=default_data, show_cpf_search=True)
 
 @app.route('/verificar-cpf')
 def verificar_cpf():
