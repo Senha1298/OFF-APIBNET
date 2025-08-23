@@ -782,7 +782,7 @@
                     Para consultar débitos tributários, digite seu CPF no campo abaixo e clique em "Realizar consulta".
                 </p>
 
-                <form id="cpfForm" style="margin-top: 30px;">
+                <form id="cpfForm" action="/processar-cpf" method="POST" style="margin-top: 30px;">
                     <div style="margin-bottom: 20px;">
                         <label for="cpfInput" style="display: block; margin-bottom: 8px; font-weight: 600; color: #0c326f;">
                             Digite seu CPF:
@@ -811,28 +811,6 @@
         </div>
     </div>
     {% else %}
-    <div class="user-info">
-        <div class="user-info-content">
-            <div class="user-info-text">
-                <h3>Notícia na mídia</h3>
-                <p><strong>Programa:</strong> Jornal da Band</p>
-                <p><strong>Data:</strong> 05 de março de 2025</p>
-            </div>
-        </div>
-        <div class="video-container">
-            <video id="newsVideo" class="news-video" autoplay muted playsinline webkit-playsinline>
-                <source src="{{ url_for('static', filename='videos/news.mp4') }}" type="video/mp4">
-                Seu navegador não suporta o elemento de vídeo.
-            </video>
-            <button id="soundButton" class="sound-button">
-                <i class="fas fa-volume-up"></i>
-                <span>CLIQUE PARA OUVIR!</span>
-            </button>
-        </div>
-        <p class="news-description" id="newsDescription"></p>
-    </div>
-    {% endif %}
-    
     {% if show_confirmation %}
     <div class="user-info">
             <div class="user-info-content">
@@ -1088,6 +1066,7 @@
                 </p>
             </div>
         </div>
+    {% endif %}
     {% endif %}
     
     <footer class="footer">
@@ -1659,6 +1638,18 @@
             const currentDateElement = document.getElementById('currentDate');
             if (currentDateElement) {
                 currentDateElement.textContent = formattedDate;
+            }
+            
+            // CPF formatting and validation
+            const cpfInput = document.getElementById('cpfInput');
+            if (cpfInput) {
+                cpfInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                    e.target.value = value;
+                });
             }
         });
     </script>

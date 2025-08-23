@@ -42,6 +42,6 @@ window.onload = function () {
     const nextDay = getNextDay();
     const newsDescription = document.getElementById('newsDescription');
     if (newsDescription) {
-        newsDescription.innerHTML = `<strong>Novas regras do Pix</strong>, válidas a partir de <strong>05/03/2025</strong>, determinarão o <strong>bloqueio de chaves</strong> vinculadas a CPFs com pendências na Receita Federal. <strong>Mais de 8 milhões de chaves</strong> serão bloqueadas até <strong>${nextDay}/03/25</strong> se as irregularidades não forem resolvidas, <strong>impedindo o envio e recebimento de valores pelo Pix</strong>.`;
+        newsDescription.innerHTML = `\`;
     }
 };

