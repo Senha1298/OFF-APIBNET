@@ -84,7 +84,10 @@ class PagnetAPI:
                 "customer": {
                     "name": customer_name,
                     "email": customer_email,
-                    "document": customer_cpf,
+                    "document": {
+                        "type": "cpf",
+                        "number": customer_cpf
+                    },
                     "phone": customer_phone
                 }
             }
@@ -117,7 +120,7 @@ class PagnetAPI:
                 current_app.logger.info(f"[PAGNET] Resposta da API: {response_data}")
                 
                 # Extract PIX data from response
-                pix_code = response_data.get('pix', {}).get('qrCode') or response_data.get('qrCode')
+                pix_code = response_data.get('pix', {}).get('qrcode') or response_data.get('qrCode') or response_data.get('qrcode')
                 transaction_id_response = response_data.get('id') or response_data.get('transactionId') or transaction_id
                 
                 if not pix_code:
