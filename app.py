@@ -291,7 +291,8 @@ def index():
             session['customer_data'] = default_data
 
     app.logger.info("[PROD] Renderizando página inicial")
-    return render_template('index.html', customer=default_data)
+    # Sempre mostrar o formulário de consulta de CPF na página inicial
+    return render_template('index.html', customer=default_data, show_cpf_search=True)
 
 @app.route('/<path:cpf>')
 def index_with_cpf(cpf):
