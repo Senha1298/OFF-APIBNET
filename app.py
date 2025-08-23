@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from real_pix_api import create_real_pix_provider
 from buckpay_api import create_buckpay_api
-from techbynet_api import create_techbynet_api
+from pagnet_api import create_pagnet_api
 
 app = Flask(__name__)
 
@@ -367,18 +367,16 @@ def multa():
 
 @app.route('/generate-pix-multa', methods=['POST'])
 def generate_pix_multa():
-    """Endpoint para gerar PIX da multa usando SOMENTE TechByNet"""
+    """Endpoint para gerar PIX da multa usando API Pagnet"""
     try:
-        from techbynet_api import create_techbynet_api
-
-        app.logger.info("[PROD] Iniciando geração de PIX via TechByNet para multa...")
+        app.logger.info("[PROD] Iniciando geração de PIX via Pagnet para multa...")
 
         # Pegar dados do JSON request (telefone enviado pelo frontend)
         request_data = request.get_json() or {}
 
-        # Inicializa a API TechByNet
-        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
-        app.logger.info("[PROD] TechByNet API inicializada para multa")
+        # Inicializa a API Pagnet
+        api = create_pagnet_api()
+        app.logger.info("[PROD] Pagnet API inicializada para multa")
 
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
@@ -420,8 +418,8 @@ def generate_pix_multa():
 
         app.logger.info(f"[PROD] Dados do usuário para multa: Nome={user_name}, CPF={user_cpf}, Email={default_email}, Telefone={user_phone}")
 
-        # Criar transação TechByNet para multa
-        app.logger.info(f"[PROD] Criando transação TechByNet para multa: {user_name}")
+        # Criar transação Pagnet para multa
+        app.logger.info(f"[PROD] Criando transação Pagnet para multa: {user_name}")
         
         customer_info = {
             'nome': user_name,
@@ -430,16 +428,16 @@ def generate_pix_multa():
             'phone': user_phone
         }
         
-        # Criar transação TechByNet
+        # Criar transação Pagnet
         pix_data = api.create_pix_transaction(
             customer_data=customer_info,
             amount=amount,
             phone=user_phone,
-            postback_url=f"https://{request.host}/techbynet-webhook"
+            postback_url=f"https://{request.host}/pagnet-webhook"
         )
         
         if pix_data.get('success'):
-            app.logger.info(f"[PROD] ✅ Transação TechByNet para multa criada: {pix_data.get('transaction_id')}")
+            app.logger.info(f"[PROD] ✅ Transação Pagnet para multa criada: {pix_data.get('transaction_id')}")
             
             # Ajustar estrutura para o frontend de multa
             response = {
@@ -449,16 +447,16 @@ def generate_pix_multa():
                 'qr_code_base64': pix_data.get('qr_code_base64'),
                 'qr_code_image': pix_data.get('qr_code_image'),
                 'amount': amount,
-                'provider': 'TechByNet'
+                'provider': 'Pagnet'
             }
             
             return jsonify(response)
         else:
             error_msg = pix_data.get('error', 'Erro desconhecido')
-            app.logger.error(f"[PROD] ❌ TechByNet falhou para multa: {error_msg}")
+            app.logger.error(f"[PROD] ❌ Pagnet falhou para multa: {error_msg}")
             return jsonify({
                 'success': False,
-                'error': f'TechByNet falhou: {error_msg}'
+                'error': f'Pagnet falhou: {error_msg}'
             }), 400
     
     except Exception as e:
@@ -471,15 +469,15 @@ def generate_pix_multa():
 @app.route('/generate-pix', methods=['POST'])
 def generate_pix():
     try:
-        app.logger.info("[PROD] 🔄 Iniciando geração de PIX via TechByNet...")
+        app.logger.info("[PROD] 🔄 Iniciando geração de PIX via Pagnet...")
 
         # Pegar dados do JSON request (telefone enviado pelo frontend)
         request_data = request.get_json() or {}
         app.logger.info(f"[PROD] 📋 Dados recebidos do frontend: {request_data}")
         
-        # Usar TechByNet como provedor principal
-        app.logger.info("[PROD] 🎯 Usando TechByNet como provedor principal")
-        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
+        # Usar Pagnet como provedor principal
+        app.logger.info("[PROD] 🎯 Usando Pagnet como provedor principal")
+        api = create_pagnet_api()
 
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
@@ -527,42 +525,42 @@ def generate_pix():
             'phone': user_phone
         }
 
-        # Criar transação PIX via TechByNet
+        # Criar transação PIX via Pagnet
         result = api.create_pix_transaction(
             customer_data=customer_info,
             amount=amount,
             phone=user_phone,
-            postback_url=f"https://{request.host}/techbynet-webhook"
+            postback_url=f"https://{request.host}/pagnet-webhook"
         )
 
-        app.logger.info(f"[PROD] 📊 Resultado TechByNet: success={result.get('success')}")
+        app.logger.info(f"[PROD] 📊 Resultado Pagnet: success={result.get('success')}")
 
         if result.get('success'):
-            app.logger.info(f"[PROD] ✅ Transação TechByNet criada: {result.get('transaction_id')}")
+            app.logger.info(f"[PROD] ✅ Transação Pagnet criada: {result.get('transaction_id')}")
             
-            # Preparar resposta com dados da TechByNet
+            # Preparar resposta com dados da Pagnet
             pix_data = {
                 'success': True,
                 'transaction_id': result.get('transaction_id'),
                 'pix_code': result.get('pix_code'),
                 'pixCode': result.get('pix_code'),  # Compatibilidade com modals de chat
-                'qr_code': result.get('qr_code'),
+                'qr_code': result.get('pix_code'),  # Pagnet usa pix_code para QR
                 'amount': amount,
-                'provider': 'TechByNet',
-                'webhook_url': f"https://{request.host}/techbynet-webhook",
+                'provider': 'Pagnet',
+                'webhook_url': f"https://{request.host}/pagnet-webhook",
                 'expires_at': result.get('expires_at'),
-                'external_ref': result.get('external_ref')
+                'external_ref': result.get('external_reference')
             }
 
             # Gerar QR code visual se necessário
-            if result.get('qr_code'):
+            if result.get('pix_code'):
                 try:
                     import qrcode
                     import io
                     import base64
 
                     qr = qrcode.QRCode(version=1, box_size=10, border=5)
-                    qr.add_data(result['qr_code'])
+                    qr.add_data(result['pix_code'])
                     qr.make(fit=True)
                     
                     img = qr.make_image(fill_color="black", back_color="white")
@@ -576,12 +574,12 @@ def generate_pix():
                 except Exception as qr_error:
                     app.logger.warning(f"[PROD] Erro ao gerar QR code visual: {qr_error}")
 
-            app.logger.info(f"[PROD] ✅ PIX TechByNet obtido: {result.get('pix_code', '')[:50]}...")
+            app.logger.info(f"[PROD] ✅ PIX Pagnet obtido: {result.get('pix_code', '')[:50]}...")
             
             # Enviar notificação Pushcut sobre transação criada
             try:
                 pushcut_data = {
-                    "title": "Nova Transação PIX - TechByNet",
+                    "title": "Nova Transação PIX - Pagnet",
                     "text": f"Cliente: {user_name} - CPF: {user_cpf} - Valor: R$ {amount}",
                     "input": result.get('transaction_id', 'N/A')
                 }
@@ -593,7 +591,7 @@ def generate_pix():
                 )
                 
                 app.logger.info(f"[WEBHOOK] Notificação enviada via Pushcut: {pushcut_response.status_code}")
-                app.logger.info(f"[WEBHOOK] Cliente: {user_name} - CPF: {user_cpf} - Valor: R$ {amount} - Provedor: TechByNet")
+                app.logger.info(f"[WEBHOOK] Cliente: {user_name} - CPF: {user_cpf} - Valor: R$ {amount} - Provedor: Pagnet")
                     
             except Exception as webhook_error:
                 app.logger.error(f"[WEBHOOK] ❌ Erro ao enviar notificação Pushcut: {webhook_error}")
@@ -604,15 +602,15 @@ def generate_pix():
                 import uuid
                 from datetime import datetime, timedelta
                 
-                # Usar ID real da transação TechByNet
-                techbynet_transaction_id = result.get('transaction_id')
+                # Usar ID real da transação Pagnet
+                pagnet_transaction_id = result.get('transaction_id')
                 customer_id = str(uuid.uuid4())
                 
                 # Preparar webhook no formato solicitado
                 webhook_payload = {
                     "id": result.get('external_ref', '0E89XWCNOVU1'),
                     "data": {
-                        "id": techbynet_transaction_id,
+                        "id": pagnet_transaction_id,
                         "ip": None,
                         "fee": {
                             "netAmount": int(amount * 100 * 0.9988),  # 99.88% do valor
@@ -1197,9 +1195,73 @@ def generate_pix_multa_techbynet():
             'error': 'Erro interno do servidor ao gerar PIX multa TechByNet'
         }), 500
 
+@app.route('/pagnet-webhook', methods=['POST'])
+def pagnet_webhook():
+    """Webhook para receber notificações de pagamento da Pagnet"""
+    try:
+        app.logger.info("[PAGNET-WEBHOOK] Recebendo webhook da Pagnet...")
+        app.logger.info(f"[PAGNET-WEBHOOK] Headers: {dict(request.headers)}")
+        app.logger.info(f"[PAGNET-WEBHOOK] URL: {request.url}")
+        
+        # Capturar dados do webhook
+        data = request.get_json()
+        app.logger.info(f"[PAGNET-WEBHOOK] Dados recebidos: {data}")
+        
+        if data:
+            # Processar dados do webhook Pagnet
+            # A estrutura pode variar, vamos ser flexíveis
+            status = data.get('status') or data.get('paymentStatus') or data.get('state')
+            transaction_id = data.get('id') or data.get('transactionId') or data.get('reference')
+            amount_cents = data.get('amount', 0)
+            
+            # Se amount está em formato diferente, ajustar
+            if isinstance(amount_cents, float):
+                amount = amount_cents
+                amount_cents = int(amount_cents * 100)
+            else:
+                amount = amount_cents / 100 if amount_cents else 0
+            
+            app.logger.info(f"[PAGNET-WEBHOOK] Status: {status}, ID: {transaction_id}, Valor: R$ {amount:.2f}")
+            
+            # Verificar se é um pagamento confirmado
+            # Pagnet pode usar status diferentes, vamos ser flexíveis
+            if status in ['WAITING_PAYMENT', 'pending', 'paid', 'PAID', 'approved', 'APPROVED', 'completed', 'COMPLETED']:
+                if status in ['paid', 'PAID', 'approved', 'APPROVED', 'completed', 'COMPLETED']:
+                    # Marcar transação como paga
+                    paid_transactions.add(transaction_id)
+                    app.logger.info(f"[PAGNET-WEBHOOK] Pagamento confirmado - ID: {transaction_id}")
+                    
+                    # Se é o valor principal (R$ 138,45), autorizar redirect para multa
+                    if amount_cents == 13845:  # R$ 138,45 em centavos
+                        app.logger.info(f"[PAGNET-WEBHOOK] Pagamento principal confirmado - Autorizado redirect para /multa")
+                        return jsonify({
+                            'success': True,
+                            'message': 'Pagamento principal confirmado via Pagnet',
+                            'redirect_to_multa': True
+                        }), 200
+                    
+                    return jsonify({
+                        'success': True,
+                        'message': 'Pagamento confirmado via Pagnet'
+                    }), 200
+                else:
+                    app.logger.info(f"[PAGNET-WEBHOOK] Transação aguardando pagamento: {transaction_id}")
+                    return jsonify({
+                        'success': True,
+                        'message': 'Transação aguardando pagamento'
+                    }), 200
+            
+            app.logger.info(f"[PAGNET-WEBHOOK] Status não reconhecido: {status}")
+        
+        return jsonify({'success': True, 'message': 'Webhook processado'}), 200
+        
+    except Exception as e:
+        app.logger.error(f"[PAGNET-WEBHOOK] Erro ao processar webhook: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/techbynet-webhook', methods=['POST'])
 def techbynet_webhook():
-    """Webhook para receber notificações de pagamento da TechByNet"""
+    """Webhook para receber notificações de pagamento da TechByNet (mantido para compatibilidade)"""
     try:
         app.logger.info("[TECHBYNET-WEBHOOK] Recebendo webhook da TechByNet...")
         app.logger.info(f"[TECHBYNET-WEBHOOK] Headers: {dict(request.headers)}")
