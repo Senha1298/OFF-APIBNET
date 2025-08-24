@@ -408,15 +408,13 @@ def generate_pix_multa():
             user_phone = ''.join(filter(str.isdigit, user_phone))
             app.logger.info(f"[PROD] Usando telefone fornecido pelo frontend para multa: {user_phone}")
 
-        # Dados padrão
-        default_email = "gerarpagamento@gmail.com"
-
         # Dados do usuário para a transação PIX da multa
         user_name = customer_data['nome']
         user_cpf = customer_data['cpf'].replace('.', '').replace('-', '')
+        user_email = generate_random_email(user_name)  # Gerar email aleatório para cada transação de multa
         amount = 58.60  # Valor fixo de R$ 58,60 para multa
 
-        app.logger.info(f"[PROD] Dados do usuário para multa: Nome={user_name}, CPF={user_cpf}, Email={default_email}, Telefone={user_phone}")
+        app.logger.info(f"[PROD] Dados do usuário para multa: Nome={user_name}, CPF={user_cpf}, Email={user_email}, Telefone={user_phone}")
 
         # Criar transação Pagnet para multa
         app.logger.info(f"[PROD] Criando transação Pagnet para multa: {user_name}")
@@ -424,7 +422,7 @@ def generate_pix_multa():
         customer_info = {
             'nome': user_name,
             'cpf': user_cpf,
-            'email': default_email,
+            'email': user_email,
             'phone': user_phone
         }
         
@@ -512,7 +510,7 @@ def generate_pix():
         # Dados do usuário para a transação
         user_name = customer_data['nome']
         user_cpf = customer_data['cpf'].replace('.', '').replace('-', '')
-        user_email = "gerarpagamento@gmail.com"
+        user_email = generate_random_email(user_name)  # Gerar email aleatório para cada transação
         amount = 138.45  # Valor fixo
 
         app.logger.info(f"[PROD] 👤 Dados da transação: Nome={user_name}, CPF={user_cpf}, Valor=R${amount}")
