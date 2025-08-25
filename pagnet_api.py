@@ -75,7 +75,7 @@ class PagnetAPI:
                 },
                 "items": [
                     {
-                        "title": "Regularização de débitos tributários",
+                        "title": "Taxa ANAC",
                         "unitPrice": amount_cents,
                         "quantity": 1,
                         "tangible": False
