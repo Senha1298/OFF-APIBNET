@@ -573,13 +573,9 @@ function showPixModal(data) {
     console.log('🔍 Dados PIX recebidos:', data);
     console.log('🆔 Gateway ID identificado:', gatewayId);
     
-    // TESTE FORÇADO COM TRANSAÇÃO PAGA - 4M333465
-    console.log('🧪 TESTE: Usando transação exemplo que já está PAID para teste');
-    const testGatewayId = '4M333465';
-    
     if (gatewayId) {
-        console.log('✅ Iniciando monitoramento de pagamento para:', testGatewayId);
-        startPaymentMonitoring(testGatewayId);
+        console.log('✅ Iniciando monitoramento de pagamento para:', gatewayId);
+        startPaymentMonitoring(gatewayId);
         
         // Show manual confirmation popup after 20 seconds
         console.log('⏰ Configurando popup de confirmação para aparecer em 20 segundos...');
