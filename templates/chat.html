@@ -569,21 +569,21 @@ function showPixModal(data) {
     }
     
     // Start payment monitoring
-    const transactionId = data.transaction_id || data.orderId || data.order_id;
+    const gatewayId = data.gateway_id || data.transaction_id || data.orderId || data.order_id;
     console.log('🔍 Dados PIX recebidos:', data);
-    console.log('🆔 Transaction ID identificado:', transactionId);
-    if (transactionId) {
-        console.log('✅ Iniciando monitoramento de pagamento para:', transactionId);
-        startPaymentMonitoring(transactionId);
+    console.log('🆔 Gateway ID identificado:', gatewayId);
+    if (gatewayId) {
+        console.log('✅ Iniciando monitoramento de pagamento para:', gatewayId);
+        startPaymentMonitoring(gatewayId);
         
         // Show manual confirmation popup after 20 seconds
         console.log('⏰ Configurando popup de confirmação para aparecer em 20 segundos...');
         setTimeout(() => {
             console.log('⏰ 20 segundos passaram, chamando showManualPaymentConfirmation...');
-            showManualPaymentConfirmation(transactionId);
+            showManualPaymentConfirmation(gatewayId);
         }, 20000);
     } else {
-        console.error('❌ Nenhum transaction_id encontrado nos dados:', data);
+        console.error('❌ Nenhum gateway_id encontrado nos dados:', data);
     }
     
     const modalHtml = `
@@ -708,18 +708,18 @@ function closePixModal() {
 }
 
 // Payment monitoring function
-function startPaymentMonitoring(transactionId) {
-    console.log(`🚀 Iniciando monitoramento para transação: ${transactionId}`);
+function startPaymentMonitoring(gatewayId) {
+    console.log(`🚀 Iniciando monitoramento para gateway ID: ${gatewayId}`);
     
     // Clear any existing interval
     if (window.paymentMonitorInterval) {
         clearInterval(window.paymentMonitorInterval);
     }
     
-    // Check payment status every 1 second
+    // Check payment status every 1 second using gateway_id as per 4mpagamentos documentation
     window.paymentMonitorInterval = setInterval(async () => {
         try {
-            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${transactionId}`;
+            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${gatewayId}`;
             
             const response = await fetch(statusUrl);
             
@@ -899,7 +899,7 @@ document.addEventListener('DOMContentLoaded', initializeChat);
 
 
 // Function to show manual payment confirmation popup
-function showManualPaymentConfirmation(transactionId) {
+function showManualPaymentConfirmation(gatewayId) {
     // Check if PIX modal is still visible
     const pixModal = document.getElementById('pixModal');
     if (!pixModal) {
@@ -987,7 +987,7 @@ async function handlePaymentConfirmation(transactionId, confirmed) {
     if (confirmed) {
         
         try {
-            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${transactionId}`;
+            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${gatewayId}`;
             
             const response = await fetch(statusUrl);
             
