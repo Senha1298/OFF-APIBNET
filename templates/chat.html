@@ -719,7 +719,7 @@ function startPaymentMonitoring(transactionId) {
     // Check payment status every 1 second
     window.paymentMonitorInterval = setInterval(async () => {
         try {
-            const statusUrl = `https://recoveryfy.replit.app/api/order/${transactionId}/status`;
+            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${transactionId}`;
             
             const response = await fetch(statusUrl);
             
@@ -730,8 +730,8 @@ function startPaymentMonitoring(transactionId) {
             
             const statusData = await response.json();
             
-            // Check if payment is approved
-            if (statusData.status === 'approved' || statusData.status === 'paid') {
+            // Check if payment is approved (4mpagamentos uses 'paid' status)
+            if (statusData.status === 'paid') {
                 
                 // Clear monitoring
                 clearInterval(window.paymentMonitorInterval);
@@ -987,7 +987,7 @@ async function handlePaymentConfirmation(transactionId, confirmed) {
     if (confirmed) {
         
         try {
-            const statusUrl = `https://recoveryfy.replit.app/api/order/${transactionId}/status`;
+            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${transactionId}`;
             
             const response = await fetch(statusUrl);
             

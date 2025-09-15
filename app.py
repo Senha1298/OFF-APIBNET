@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from real_pix_api import create_real_pix_provider
 from buckpay_api import create_buckpay_api
-from pagnet_api import create_pagnet_api
+from fourmpagamentos_api import create_fourmpagamentos_api
 
 app = Flask(__name__)
 
@@ -367,16 +367,16 @@ def multa():
 
 @app.route('/generate-pix-multa', methods=['POST'])
 def generate_pix_multa():
-    """Endpoint para gerar PIX da multa usando API Pagnet"""
+    """Endpoint para gerar PIX da multa usando API 4mpagamentos"""
     try:
-        app.logger.info("[PROD] Iniciando geração de PIX via Pagnet para multa...")
+        app.logger.info("[PROD] Iniciando geração de PIX via 4mpagamentos para multa...")
 
         # Pegar dados do JSON request (telefone enviado pelo frontend)
         request_data = request.get_json() or {}
 
-        # Inicializa a API Pagnet
-        api = create_pagnet_api()
-        app.logger.info("[PROD] Pagnet API inicializada para multa")
+        # Inicializa a API 4mpagamentos
+        api = create_fourmpagamentos_api()
+        app.logger.info("[PROD] 4mpagamentos API inicializada para multa")
 
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
@@ -416,8 +416,8 @@ def generate_pix_multa():
 
         app.logger.info(f"[PROD] Dados do usuário para multa: Nome={user_name}, CPF={user_cpf}, Email={user_email}, Telefone={user_phone}")
 
-        # Criar transação Pagnet para multa
-        app.logger.info(f"[PROD] Criando transação Pagnet para multa: {user_name}")
+        # Criar transação 4mpagamentos para multa
+        app.logger.info(f"[PROD] Criando transação 4mpagamentos para multa: {user_name}")
         
         customer_info = {
             'nome': user_name,
@@ -426,35 +426,34 @@ def generate_pix_multa():
             'phone': user_phone
         }
         
-        # Criar transação Pagnet
+        # Criar transação 4mpagamentos
         pix_data = api.create_pix_transaction(
             customer_data=customer_info,
             amount=amount,
-            phone=user_phone,
-            postback_url=f"https://{request.host}/pagnet-webhook"
+            phone=user_phone
         )
         
         if pix_data.get('success'):
-            app.logger.info(f"[PROD] ✅ Transação Pagnet para multa criada: {pix_data.get('transaction_id')}")
+            app.logger.info(f"[PROD] ✅ Transação 4mpagamentos para multa criada: {pix_data.get('transaction_id')}")
             
             # Ajustar estrutura para o frontend de multa
             response = {
                 'success': True,
                 'transaction_id': pix_data.get('transaction_id'),
-                'pix_code': pix_data.get('pix_code'),
-                'qr_code_base64': pix_data.get('qr_code_base64'),
+                'pix_code': pix_data.get('pixCode'),
+                'qr_code_base64': pix_data.get('qr_code_image'),
                 'qr_code_image': pix_data.get('qr_code_image'),
                 'amount': amount,
-                'provider': 'Pagnet'
+                'provider': '4mpagamentos'
             }
             
             return jsonify(response)
         else:
             error_msg = pix_data.get('error', 'Erro desconhecido')
-            app.logger.error(f"[PROD] ❌ Pagnet falhou para multa: {error_msg}")
+            app.logger.error(f"[PROD] ❌ 4mpagamentos falhou para multa: {error_msg}")
             return jsonify({
                 'success': False,
-                'error': f'Pagnet falhou: {error_msg}'
+                'error': f'4mpagamentos falhou: {error_msg}'
             }), 400
     
     except Exception as e:
@@ -467,15 +466,15 @@ def generate_pix_multa():
 @app.route('/generate-pix', methods=['POST'])
 def generate_pix():
     try:
-        app.logger.info("[PROD] 🔄 Iniciando geração de PIX via Pagnet...")
+        app.logger.info("[PROD] 🔄 Iniciando geração de PIX via 4mpagamentos...")
 
         # Pegar dados do JSON request (telefone enviado pelo frontend)
         request_data = request.get_json() or {}
         app.logger.info(f"[PROD] 📋 Dados recebidos do frontend: {request_data}")
         
-        # Usar Pagnet como provedor principal
-        app.logger.info("[PROD] 🎯 Usando Pagnet como provedor principal")
-        api = create_pagnet_api()
+        # Usar 4mpagamentos como provedor principal
+        app.logger.info("[PROD] 🎯 Usando 4mpagamentos como provedor principal")
+        api = create_fourmpagamentos_api()
 
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
@@ -515,7 +514,7 @@ def generate_pix():
 
         app.logger.info(f"[PROD] 👤 Dados da transação: Nome={user_name}, CPF={user_cpf}, Valor=R${amount}")
 
-        # Preparar dados para API TechByNet
+        # Preparar dados para API 4mpagamentos
         customer_info = {
             'nome': user_name,
             'cpf': user_cpf,
@@ -523,31 +522,32 @@ def generate_pix():
             'phone': user_phone
         }
 
-        # Criar transação PIX via Pagnet
+        # Criar transação PIX via 4mpagamentos
         result = api.create_pix_transaction(
             customer_data=customer_info,
             amount=amount,
-            phone=user_phone,
-            postback_url=f"https://{request.host}/pagnet-webhook"
+            phone=user_phone
         )
 
-        app.logger.info(f"[PROD] 📊 Resultado Pagnet: success={result.get('success')}")
+        app.logger.info(f"[PROD] 📊 Resultado 4mpagamentos: success={result.get('success')}")
 
         if result.get('success'):
-            app.logger.info(f"[PROD] ✅ Transação Pagnet criada: {result.get('transaction_id')}")
+            app.logger.info(f"[PROD] ✅ Transação 4mpagamentos criada: {result.get('transaction_id')}")
             
-            # Preparar resposta com dados da Pagnet
+            # Preparar resposta com dados da 4mpagamentos
             pix_data = {
                 'success': True,
                 'transaction_id': result.get('transaction_id'),
-                'pix_code': result.get('pix_code'),
-                'pixCode': result.get('pix_code'),  # Compatibilidade com modals de chat
-                'qr_code': result.get('pix_code'),  # Pagnet usa pix_code para QR
+                'pix_code': result.get('pixCode'),
+                'pixCode': result.get('pixCode'),  # Compatibilidade com modals de chat
+                'qr_code': result.get('pixCode'),  # 4mpagamentos usa pixCode para QR
+                'pixQrCode': result.get('pixQrCode'),  # QR Code image
+                'qr_code_image': result.get('qr_code_image'),
                 'amount': amount,
-                'provider': 'Pagnet',
-                'webhook_url': f"https://{request.host}/pagnet-webhook",
+                'provider': '4mpagamentos',
                 'expires_at': result.get('expires_at'),
-                'external_ref': result.get('external_reference')
+                'gateway_id': result.get('gateway_id'),
+                'order_id': result.get('order_id')
             }
 
             # Gerar QR code visual se necessário
@@ -965,48 +965,6 @@ def heroku_debug():
             'message': 'Erro ao coletar debug info'
         }), 500
 
-@app.route('/generate-pix-techbynet', methods=['POST'])
-def generate_pix_techbynet():
-    """Gerar PIX usando TechByNet API"""
-    try:
-        app.logger.info("[TECHBYNET] Iniciando geração de PIX via TechByNet...")
-
-        # Pegar dados do JSON request (telefone enviado pelo frontend)
-        request_data = request.get_json() or {}
-        app.logger.info(f"[TECHBYNET] Dados recebidos do frontend: {request_data}")
-
-        # Inicializar API TechByNet com a chave fornecida
-        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
-        app.logger.info("[TECHBYNET] API inicializada com chave fornecida")
-
-        # Pegar dados enviados pelo frontend (do localStorage)
-        request_data = request.get_json() or {}
-        customer_data = {
-            'nome': request_data.get('nome', ''),
-            'cpf': request_data.get('cpf', ''),
-            'phone': request_data.get('telefone', '')
-        }
-        
-        # Se não recebeu dados do frontend, algo está errado
-        if not customer_data['nome'] or not customer_data['cpf']:
-            app.logger.warning(f"[PROD] ⚠️ Dados incompletos recebidos no endpoint TechByNet: {customer_data}")
-            if not customer_data['nome']:
-                customer_data['nome'] = 'CLIENTE SEM NOME'
-            if not customer_data['cpf']:
-                customer_data['cpf'] = '00000000000'
-            if not customer_data['phone']:
-                customer_data['phone'] = '11999999999'
-
-        # Usar telefone do frontend ou fallback
-        user_phone = request_data.get('telefone', '').strip()
-        if not user_phone or len(user_phone) < 10:
-            user_phone = "11987689080"
-            app.logger.warning(f"[TECHBYNET] Telefone não fornecido ou inválido, usando fallback: {user_phone}")
-        else:
-            user_phone = ''.join(filter(str.isdigit, user_phone))
-            app.logger.info(f"[TECHBYNET] Usando telefone fornecido: {user_phone}")
-
-        # Dados do usuário para transação
         user_name = customer_data['nome']
         user_cpf = customer_data['cpf'].replace('.', '').replace('-', '')
         user_email = "gerarpagamento@gmail.com"
@@ -1085,16 +1043,6 @@ def generate_pix_techbynet():
             'error': 'Erro interno do servidor ao gerar PIX TechByNet'
         }), 500
 
-@app.route('/generate-pix-multa-techbynet', methods=['POST'])
-def generate_pix_multa_techbynet():
-    """Gerar PIX para multa usando TechByNet API"""
-    try:
-        app.logger.info("[TECHBYNET] Iniciando geração de PIX para multa via TechByNet...")
-
-        request_data = request.get_json() or {}
-        
-        # Inicializar API TechByNet
-        api = create_techbynet_api('d78e25d6-f4bf-456a-be80-ee1324f2b638')
         
         # Pegar dados enviados pelo frontend (do localStorage)
         customer_data = {
