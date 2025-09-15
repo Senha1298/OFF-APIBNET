@@ -76,16 +76,27 @@ class FourMPagamentosAPI:
             
             if response.status_code == 200 or response.status_code == 201:
                 data = response.json()
-                current_app.logger.info(f"[4MPAG] ✅ Transação criada com sucesso - ID: {data.get('gateway_id', 'N/A')}")
+                
+                # Log the complete response to understand the structure
+                current_app.logger.info(f"[4MPAG] 📋 Resposta completa da API: {data}")
+                
+                # Extract transaction ID - 4mpagamentos uses 'transactionId' as the main ID
+                transaction_id = data.get('transactionId') or data.get('id')
+                
+                # Extract PIX code - 4mpagamentos uses 'pixCode'
+                pix_code = data.get('pixCode')
+                
+                current_app.logger.info(f"[4MPAG] ✅ Transação criada - ID: {transaction_id}")
+                current_app.logger.info(f"[4MPAG] 💳 Código PIX extraído: {pix_code}")
                 
                 return {
                     'success': True,
-                    'transaction_id': data.get('gateway_id'),
-                    'pixCode': data.get('pix_code'),
-                    'pixQrCode': data.get('pixQrCode'),
-                    'qr_code_image': data.get('qr_code_image'),
-                    'gateway_id': data.get('gateway_id'),
-                    'order_id': data.get('gateway_id'),
+                    'transaction_id': transaction_id,
+                    'pixCode': pix_code,
+                    'pixQrCode': data.get('pixQrCode') or data.get('qr_code'),
+                    'qr_code_image': data.get('qr_code_image') or data.get('qrcode_image'),
+                    'gateway_id': transaction_id,
+                    'order_id': transaction_id,
                     'amount': amount,
                     'status': data.get('status', 'pending'),
                     'expires_at': data.get('expires_at'),
