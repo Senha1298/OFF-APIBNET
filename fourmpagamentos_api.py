@@ -13,7 +13,7 @@ class FourMPagamentosAPI:
     
     def __init__(self):
         self.base_url = "https://4mpagamentos.replit.app/api/v1"
-        self.api_key = os.environ.get('FOURMPAGAMENTOS_API_KEY', '3mpag_6lpcnqaiv_mf7wxvzg')
+        self.api_key = os.environ.get('FOURMPAGAMENTOS_API_KEY')
         
         if not self.api_key:
             current_app.logger.error("[4MPAG] Chave de API não encontrada nas variáveis de ambiente")
