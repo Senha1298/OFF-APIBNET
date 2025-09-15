@@ -709,19 +709,27 @@ function closePixModal() {
 
 // Payment monitoring function
 function startPaymentMonitoring(gatewayId) {
-    console.log(`🚀 Iniciando monitoramento para gateway ID: ${gatewayId}`);
+    console.log(`🚀 INICIANDO MONITORAMENTO AUTOMÁTICO - Gateway ID: ${gatewayId}`);
+    console.log(`📍 URL de verificação: https://4mpagamentos.replit.app/api/v1/transactions/${gatewayId}`);
     
     // Clear any existing interval
     if (window.paymentMonitorInterval) {
         clearInterval(window.paymentMonitorInterval);
+        console.log('🔄 Limpando monitoramento anterior');
     }
     
-    // Check payment status every 1 second using gateway_id as per 4mpagamentos documentation
+    // VERIFICA STATUS A CADA 1 SEGUNDO - REDIRECIONAMENTO INSTANTÂNEO
     window.paymentMonitorInterval = setInterval(async () => {
         try {
             const statusUrl = `https://4mpagamentos.replit.app/api/v1/transactions/${gatewayId}`;
+            console.log(`🔍 Verificando pagamento... URL: ${statusUrl}`);
             
-            const response = await fetch(statusUrl);
+            const response = await fetch(statusUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
             
             if (!response.ok) {
                 console.error(`❌ Erro HTTP ${response.status}: ${response.statusText}`);
@@ -729,24 +737,42 @@ function startPaymentMonitoring(gatewayId) {
             }
             
             const statusData = await response.json();
+            console.log('📊 RESPOSTA DA API 4MPAGAMENTOS:', JSON.stringify(statusData, null, 2));
             
-            // Check if payment is approved (4mpagamentos uses 'paid' status)
-            if (statusData.status === 'paid') {
+            // VERIFICA SE PAGAMENTO FOI APROVADO
+            if (statusData.status === 'paid' || statusData.status === 'approved' || statusData.status === 'completed') {
+                console.log('🎉 🎉 🎉 PAGAMENTO CONFIRMADO! REDIRECIONANDO AGORA! 🎉 🎉 🎉');
                 
-                // Clear monitoring
+                // Para o monitoramento imediatamente
                 clearInterval(window.paymentMonitorInterval);
                 window.paymentMonitorInterval = null;
                 
-                // Close modal
-                closePixModal();
+                // Remove modal se existir
+                const modal = document.getElementById('pixModal');
+                if (modal) {
+                    modal.remove();
+                }
                 
-                // Redirect immediately to /multa
+                // REDIRECIONAMENTO INSTANTÂNEO PARA /MULTA
+                console.log('↗️ Redirecionando para /multa...');
                 window.location.href = '/multa';
+                return;
+                
+            } else if (statusData.status === 'expired' || statusData.status === 'cancelled' || statusData.status === 'failed') {
+                console.log(`❌ Transação ${statusData.status} - parando monitoramento`);
+                clearInterval(window.paymentMonitorInterval);
+                window.paymentMonitorInterval = null;
+                return;
+            } else {
+                console.log(`⏳ Status atual: ${statusData.status} - continuando monitoramento...`);
             }
+            
         } catch (error) {
-            console.error('❌ Erro ao verificar status do pagamento:', error);
+            console.error('❌ ERRO NO MONITORAMENTO:', error);
         }
-    }, 1000); // Check every 1 second
+    }, 1000); // VERIFICA A CADA 1 SEGUNDO EXATO
+    
+    console.log('✅ Monitoramento ativo - verificando a cada 1 segundo até pagamento ser aprovado');
     
     
     // Timeout after 20 minutes (PIX expiration)
