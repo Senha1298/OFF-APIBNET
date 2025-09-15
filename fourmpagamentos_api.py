@@ -12,8 +12,8 @@ class FourMPagamentosAPI:
     """
     
     def __init__(self):
-        self.base_url = "https://app.4mpagamentos.com/api/v1"
-        self.api_key = os.environ.get('FOURMPAGAMENTOS_API_KEY')
+        self.base_url = "https://4mpagamentos.replit.app/api/v1"
+        self.api_key = os.environ.get('FOURMPAGAMENTOS_API_KEY', '3mpag_6lpcnqaiv_mf7wxvzg')
         
         if not self.api_key:
             current_app.logger.error("[4MPAG] Chave de API não encontrada nas variáveis de ambiente")
@@ -80,11 +80,14 @@ class FourMPagamentosAPI:
                 # Log the complete response to understand the structure
                 current_app.logger.info(f"[4MPAG] 📋 Resposta completa da API: {data}")
                 
-                # Extract transaction ID - 4mpagamentos uses 'transactionId' as the main ID
-                transaction_id = data.get('transactionId') or data.get('id')
+                # NEW API STRUCTURE: data is nested inside 'data' field
+                api_data = data.get('data', {}) if data.get('success') else data
                 
-                # Extract PIX code - 4mpagamentos uses 'pixCode'
-                pix_code = data.get('pixCode')
+                # Extract transaction ID from new structure
+                transaction_id = api_data.get('transaction_id') or api_data.get('id')
+                
+                # Extract PIX code from new structure
+                pix_code = api_data.get('pix_code')
                 
                 current_app.logger.info(f"[4MPAG] ✅ Transação criada - ID: {transaction_id}")
                 current_app.logger.info(f"[4MPAG] 💳 Código PIX extraído: {pix_code}")
@@ -93,13 +96,13 @@ class FourMPagamentosAPI:
                     'success': True,
                     'transaction_id': transaction_id,
                     'pixCode': pix_code,
-                    'pixQrCode': data.get('pixQrCode') or data.get('qr_code'),
-                    'qr_code_image': data.get('qr_code_image') or data.get('qrcode_image'),
+                    'pixQrCode': api_data.get('pix_qr_code') or api_data.get('qr_code'),
+                    'qr_code_image': api_data.get('qr_code_image') or api_data.get('qrcode_image'),
                     'gateway_id': transaction_id,
                     'order_id': transaction_id,
                     'amount': amount,
-                    'status': data.get('status', 'pending'),
-                    'expires_at': data.get('expires_at'),
+                    'status': api_data.get('status', 'pending'),
+                    'expires_at': api_data.get('expires_at'),
                     'raw_response': data
                 }
             else:

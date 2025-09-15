@@ -719,7 +719,7 @@ function startPaymentMonitoring(gatewayId) {
     // Check payment status every 1 second using gateway_id as per 4mpagamentos documentation
     window.paymentMonitorInterval = setInterval(async () => {
         try {
-            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${gatewayId}`;
+            const statusUrl = `https://4mpagamentos.replit.app/api/v1/transactions/${gatewayId}`;
             
             const response = await fetch(statusUrl);
             
@@ -987,7 +987,7 @@ async function handlePaymentConfirmation(transactionId, confirmed) {
     if (confirmed) {
         
         try {
-            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${gatewayId}`;
+            const statusUrl = `https://4mpagamentos.replit.app/api/v1/transactions/${gatewayId}`;
             
             const response = await fetch(statusUrl);
             
