@@ -38,34 +38,6 @@ class MediusPagAPI:
         unique_id = str(uuid.uuid4()).replace('-', '')[:8]
         return f"MP{timestamp}{unique_id}"
     
-    def _send_pushcut_notification(self, transaction_data: Dict[str, Any]) -> None:
-        """Send webhook notification to Pushcut when transaction is created"""
-        def send_webhook():
-            try:
-                pushcut_url = "https://api.pushcut.io/TXeS_0jR0bN2YTIatw4W2/notifications/Minha%20Primeira%20Notifica%C3%A7%C3%A3o"
-                
-                # Formatar dados para Pushcut
-                webhook_data = {
-                    "title": "Nova Transação MEDIUS PAG",
-                    "text": f"PIX gerado: R$ {transaction_data.get('amount', 0):.2f}\nID: {transaction_data.get('transaction_id', 'N/A')}\nCliente: {transaction_data.get('customer_name', 'N/A')}",
-                    "input": {
-                        "transaction_id": transaction_data.get('transaction_id'),
-                        "amount": transaction_data.get('amount'),
-                        "customer": transaction_data.get('customer_name'),
-                        "created_at": transaction_data.get('created_at')
-                    }
-                }
-                
-                response = requests.post(pushcut_url, json=webhook_data, timeout=10)
-                
-                if response.status_code == 200:
-                    logger.info(f"✅ Pushcut notification enviada: {transaction_data.get('transaction_id')}")
-                else:
-                    logger.warning(f"⚠️ Pushcut retornou status {response.status_code}: {response.text}")
-                    
-            except Exception as e:
-                logger.error(f"❌ Erro ao enviar Pushcut: {e}")
-        
         # Executar em thread separada para não bloquear
         thread = threading.Thread(target=send_webhook)
         thread.daemon = True
@@ -102,7 +74,7 @@ class MediusPagAPI:
             # Payload completo baseado no padrão MEDIUS PAG/owempay.com.br
             payload = {
                 "amount": amount_cents,
-                "description": "Receita de bolo",
+                "description": "Nome do Produto",
                 "paymentMethod": "PIX",
                 "customer": {
                     "name": data.get('customer_name', 'Cliente'),
@@ -112,11 +84,11 @@ class MediusPagAPI:
                 },
                 "companyId": "30427d55-e437-4384-88de-6ba84fc74833",
                 "externalId": transaction_id,
-                "postbackUrl": "https://irpf.intimacao.org/medius-postback",  # URL para receber postbacks
+                "postbackUrl": "",  # URL para receber postbacks
                 "products": [
                     {
-                        "name": "Receita de bolo",
-                        "quantity": 1,
+                        "name": "Nome do Produto",
+                        "quantity": "Quantidade do Produto (usar apenas numeros}",
                         "price": amount_cents
                     }
                 ]
