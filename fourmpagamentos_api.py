@@ -54,7 +54,7 @@ class FourMPagamentosAPI:
             
             # Prepare the payload according to 4mpagamentos documentation
             payload = {
-                "amount": amount,
+                "amount": str(amount),
                 "customer_name": customer_name,
                 "customer_email": customer_email,
                 "customer_cpf": customer_cpf,
