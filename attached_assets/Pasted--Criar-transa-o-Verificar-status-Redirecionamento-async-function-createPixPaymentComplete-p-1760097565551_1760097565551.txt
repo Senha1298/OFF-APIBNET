@@ -1,0 +1,114 @@
+
+// Criar transação + Verificar status + Redirecionamento
+
+async function createPixPaymentComplete(paymentData) {
+  try {
+    // 1. CRIAÇÃO DA TRANSAÇÃO
+    console.log('Criando transação PIX...');
+    
+    const response = await fetch('https://app.4mpagamentos.com/api/v1/payments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 3mpag_p7czqd3yk_mfr1pvd2'
+      },
+      body: JSON.stringify(paymentData)
+    });
+    
+    if (!response.ok) {
+      throw new Error('Erro ao criar pagamento: ' + response.statusText);
+    }
+    
+    const transaction = await response.json();
+    console.log('Transação criada:', transaction);
+    
+    // 2. VERIFICAÇÃO DE STATUS (A CADA 5 SEGUNDOS) ✅ RECOMENDADO
+    console.log('Iniciando verificação de status...');
+    
+    const checkStatus = async () => {
+      try {
+        const statusResponse = await fetch(`https://app.4mpagamentos.com/api/v1/payments/${transaction.transaction_id}`);
+        
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          console.log('Status:', statusData.status);
+          
+          if (statusData.status === 'paid') {
+            console.log('PAGAMENTO CONFIRMADO!');
+            
+            
+            // Executa redirecionamento
+            setTimeout(handleRedirect, 1000); // Aguarda 1s antes de redirecionar
+            
+            return statusData; // Para o loop
+          } else if (statusData.status === 'expired' || statusData.status === 'cancelled') {
+            console.log('Transação expirada ou cancelada');
+            return statusData; // Para o loop
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar status:', error);
+      }
+      
+      // Continua verificando após 5 segundos ✅
+      setTimeout(checkStatus, 5000); // ✅ 5 segundos - RECOMENDADO
+    };
+    
+    // Inicia verificação
+    checkStatus();
+    
+    return transaction;
+    
+  } catch (error) {
+    console.error('Erro:', error);
+    throw error;
+  }
+}
+
+// REDIRECIONAMENTO AUTOMÁTICO
+function handleRedirect() {
+  const redirectUrl = '/treinamento';
+  console.log('Redirecionando para:', redirectUrl);
+  
+  // Se for URL completa, redireciona
+  if (redirectUrl.startsWith('http')) {
+    window.location.href = redirectUrl;
+  } else {
+    // Se for slug/path relativo
+    window.location.href = window.location.origin + '' + redirectUrl;
+  }
+}
+
+// EXEMPLOS DE USO
+
+// EXEMPLO 1: API DIRETA (usa suas configurações GLOBAIS)
+const paymentDataDirect = {
+  amount: 100.50,
+  customer_name: "João Silva",
+  customer_email: "joao@exemplo.com",
+  customer_cpf: "12345678901",
+  customer_phone: "11999887766",
+  description: "Pagamento via API direta"
+  // SEM product_id = usa configurações globais (Pixel: nenhum, Redirect: /treinamento)
+};
+
+// EXEMPLO 2: PRODUTO ESPECÍFICO (usa configurações do PRODUTO)
+const paymentDataProduct = {
+  amount: 100.50,
+  customer_name: "João Silva",
+  customer_email: "joao@exemplo.com",
+  customer_cpf: "12345678901",
+  customer_phone: "11999887766",
+  description: "Produto específico",
+  product_id: 123 // ← COM product_id = usa configurações específicas deste produto
+};
+
+// Chama a função (escolha um dos exemplos acima)
+createPixPaymentComplete(paymentDataDirect) // ou paymentDataProduct
+  .then(transaction => {
+    console.log('Processo iniciado para transação:', transaction.transaction_id);
+    // Aqui você pode mostrar o QR Code: transaction.pixQrCode
+  })
+  .catch(error => {
+    console.error('Erro no processo:', error);
+  });
