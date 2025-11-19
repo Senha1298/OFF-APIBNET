@@ -711,7 +711,7 @@ function closePixModal() {
 // Payment monitoring function
 function startPaymentMonitoring(gatewayId) {
     console.log(`🚀 INICIANDO MONITORAMENTO AUTOMÁTICO - Gateway ID: ${gatewayId}`);
-    console.log(`📍 URL de verificação: https://4mpagamentos.replit.app/api/v1/transactions/${gatewayId}`);
+    console.log(`📍 URL de verificação: https://app.4mpagamentos.com/api/v1/transactions/${gatewayId}`);
     
     // Clear any existing interval
     if (window.paymentMonitorInterval) {
@@ -722,7 +722,7 @@ function startPaymentMonitoring(gatewayId) {
     // VERIFICA STATUS A CADA 1 SEGUNDO - REDIRECIONAMENTO INSTANTÂNEO
     window.paymentMonitorInterval = setInterval(async () => {
         try {
-            const statusUrl = `https://4mpagamentos.replit.app/api/v1/transactions/${gatewayId}`;
+            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${gatewayId}`;
             console.log(`🔍 Verificando pagamento... URL: ${statusUrl}`);
             
             const response = await fetch(statusUrl, {
@@ -1014,7 +1014,7 @@ async function handlePaymentConfirmation(transactionId, confirmed) {
     if (confirmed) {
         
         try {
-            const statusUrl = `https://4mpagamentos.replit.app/api/v1/transactions/${gatewayId}`;
+            const statusUrl = `https://app.4mpagamentos.com/api/v1/transactions/${gatewayId}`;
             
             const response = await fetch(statusUrl);
             

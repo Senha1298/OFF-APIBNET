@@ -12,7 +12,7 @@ class FourMPagamentosAPI:
     """
     
     def __init__(self):
-        self.base_url = "https://4mpagamentos.replit.app/api/v1"
+        self.base_url = "https://app.4mpagamentos.com/api/v1"
         self.api_key = os.environ.get('FOURMPAGAMENTOS_API_KEY')
         
         if not self.api_key:

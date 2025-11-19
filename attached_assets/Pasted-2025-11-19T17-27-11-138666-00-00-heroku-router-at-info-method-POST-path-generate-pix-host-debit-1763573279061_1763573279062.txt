@@ -1,0 +1,18 @@
+2025-11-19T17:27:11.138666+00:00 heroku[router]: at=info method=POST path="/generate-pix" host=debitos.intimacao.com request_id=949d91c5-6f2f-d1f9-ef1e-a68fae5a504d fwd="201.87.252.89" dyno=web.1 connect=0ms service=39ms status=400 bytes=72 protocol=http2.0 tls=true tls_version=tls1.3
+2025-11-19T17:27:11.100574+00:00 app[web.1]: INFO:app:[PROD] 🔄 Iniciando geração de PIX via 4mpagamentos...
+2025-11-19T17:27:11.100700+00:00 app[web.1]: INFO:app:[PROD] 📋 Dados recebidos do frontend: {'telefone': '61999114066', 'nome': 'PEDRO HENRIQUE DOS SANTOS', 'cpf': '065.370.801-77'}
+2025-11-19T17:27:11.100714+00:00 app[web.1]: INFO:app:[PROD] 🎯 Usando 4mpagamentos como provedor principal
+2025-11-19T17:27:11.100751+00:00 app[web.1]: INFO:app:[4MPAG] API client inicializada com sucesso
+2025-11-19T17:27:11.100777+00:00 app[web.1]: INFO:app:[PROD] Dados do cliente recebidos no endpoint PIX: Nome=PEDRO HENRIQUE DOS SANTOS, CPF=065.370.801-77, Phone=61999114066
+2025-11-19T17:27:11.100805+00:00 app[web.1]: INFO:app:[PROD] 📱 Usando telefone fornecido: 61999114066
+2025-11-19T17:27:11.100860+00:00 app[web.1]: INFO:app:[PROD] 👤 Dados da transação: Nome=PEDRO HENRIQUE DOS SANTOS, CPF=06537080177, Valor=R$138.45
+2025-11-19T17:27:11.100889+00:00 app[web.1]: INFO:app:[4MPAG] Iniciando criação de transação PIX - Valor: R$ 138.45
+2025-11-19T17:27:11.100916+00:00 app[web.1]: INFO:app:[4MPAG] Dados da transação: Nome=PEDRO HENRIQUE DOS SANTOS, CPF=06537080177, Valor=R$138.45
+2025-11-19T17:27:11.100943+00:00 app[web.1]: INFO:app:[4MPAG] Enviando requisição para: https://4mpagamentos.replit.app/api/v1/payments
+2025-11-19T17:27:11.101815+00:00 app[web.1]: DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): 4mpagamentos.replit.app:443
+2025-11-19T17:27:11.137278+00:00 app[web.1]: DEBUG:urllib3.connectionpool:https://4mpagamentos.replit.app:443 "POST /api/v1/payments HTTP/1.1" 404 9
+2025-11-19T17:27:11.137603+00:00 app[web.1]: INFO:app:[4MPAG] Resposta recebida - Status: 404
+2025-11-19T17:27:11.137689+00:00 app[web.1]: ERROR:app:[4MPAG] ❌ Erro da API: Not Found
+2025-11-19T17:27:11.137993+00:00 app[web.1]: INFO:app:[PROD] 📊 Resultado 4mpagamentos: success=False
+2025-11-19T17:27:11.138031+00:00 app[web.1]: ERROR:app:[PROD] ❌ TechByNet falhou para chat: Erro na API - Status: 404
+2025-11-19T17:27:11.138578+00:00 app[web.1]: 10.1.24.108 - - [19/Nov/2025:17:27:11 +0000] "POST /generate-pix HTTP/1.1" 400 72 "https://debitos.intimacao.com/chat" "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Mobile/15E148 Safari/604.1"
